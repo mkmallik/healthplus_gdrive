@@ -7,6 +7,8 @@ import {
   getClientId,
   setClientId,
   getStoredTokens,
+  getClientSecret,
+  setClientSecret,
 } from '../services/googleAuthService';
 import { getOrCreateSpreadsheet, clearSpreadsheetId, getSpreadsheetUrl } from '../services/spreadsheetSetup';
 import { initDB, resetDB } from '../services/sheetsDB';
@@ -22,7 +24,7 @@ interface DriveContextType {
   spreadsheetId: string | null;
   clientId: string | null;
 
-  connect: (clientId: string) => Promise<void>;
+  connect: (clientId: string, clientSecret: string) => Promise<void>;
   disconnect: () => Promise<void>;
   setGoogleClientId: (id: string) => Promise<void>;
   reloadData: () => Promise<void>;
@@ -94,13 +96,14 @@ export function DriveProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  const connect = useCallback(async (cid: string) => {
+  const connect = useCallback(async (cid: string, secret: string) => {
     setStatus('connecting');
     setError(null);
     try {
       await setClientId(cid);
+      await setClientSecret(secret);
       setClientIdState(cid);
-      const tokens = await signInWithGoogle(cid);
+      const tokens = await signInWithGoogle(cid, secret);
       setUserEmail(tokens.email);
       setUserName(tokens.name);
       await loadSpreadsheetAndInit();

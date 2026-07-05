@@ -11,6 +11,7 @@ import {
   USER_EMAIL_KEY,
   USER_NAME_KEY,
   GOOGLE_SCOPES,
+  SHEETS_CLIENT_SECRET_KEY,
 } from '../utils/constants';
 
 WebBrowser.maybeCompleteAuthSession();
@@ -31,6 +32,18 @@ export async function getClientId(): Promise<string | null> {
 
 export async function setClientId(id: string): Promise<void> {
   return SecureStore.setItemAsync(SHEETS_CLIENT_ID_KEY, id);
+}
+
+export async function getClientSecret(): Promise<string | null> {
+  return SecureStore.getItemAsync(SHEETS_CLIENT_SECRET_KEY);
+}
+
+export async function setClientSecret(secret: string): Promise<void> {
+  return SecureStore.setItemAsync(SHEETS_CLIENT_SECRET_KEY, secret);
+}
+
+export async function clearClientSecret(): Promise<void> {
+  return SecureStore.deleteItemAsync(SHEETS_CLIENT_SECRET_KEY);
 }
 
 export async function clearClientId(): Promise<void> {
@@ -85,7 +98,7 @@ async function generatePKCE(): Promise<{ verifier: string; challenge: string }> 
 
 // ── Sign-in flow ──────────────────────────────────────────────────────────────
 
-export async function signInWithGoogle(clientId: string): Promise<GoogleTokens> {
+export async function signInWithGoogle(clientId: string, clientSecret: string): Promise<GoogleTokens> {
   const redirectUri = Platform.OS === 'web'
     ? window.location.origin
     : AuthSession.makeRedirectUri({ scheme: 'healthplus-gdrive', path: 'oauth2redirect' });
@@ -123,6 +136,7 @@ export async function signInWithGoogle(clientId: string): Promise<GoogleTokens> 
       redirect_uri: redirectUri,
       grant_type: 'authorization_code',
       code_verifier: verifier,
+      client_secret: clientSecret,
     }).toString(),
   });
 

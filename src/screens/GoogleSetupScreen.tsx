@@ -17,18 +17,24 @@ import { COLORS } from '../utils/constants';
 export default function GoogleSetupScreen() {
   const { status, error, connect, clientId } = useDrive();
   const [inputClientId, setInputClientId] = useState(clientId || '');
+  const [inputClientSecret, setInputClientSecret] = useState('');
   const [showHelp, setShowHelp] = useState(false);
 
   const isConnecting = status === 'connecting' || status === 'loading';
 
   const handleConnect = async () => {
     const cid = inputClientId.trim();
+    const secret = inputClientSecret.trim();
     if (!cid) {
       Alert.alert('Missing Client ID', 'Please enter your Google OAuth Client ID.');
       return;
     }
+    if (!secret) {
+      Alert.alert('Missing Client Secret', 'Please enter your Google OAuth Client Secret.');
+      return;
+    }
     try {
-      await connect(cid);
+      await connect(cid, secret);
     } catch (e: any) {
       Alert.alert('Connection Failed', e.message || 'Could not connect to Google Drive.');
     }
@@ -62,6 +68,19 @@ export default function GoogleSetupScreen() {
           editable={!isConnecting}
         />
 
+        <Text style={styles.label}>Google OAuth Client Secret</Text>
+        <TextInput
+          style={styles.input}
+          value={inputClientSecret}
+          onChangeText={setInputClientSecret}
+          placeholder="GOCSPX-..."
+          placeholderTextColor={COLORS.textMuted}
+          autoCapitalize="none"
+          autoCorrect={false}
+          secureTextEntry={false}
+          editable={!isConnecting}
+        />
+
         <TouchableOpacity
           style={[styles.button, isConnecting && styles.buttonDisabled]}
           onPress={handleConnect}
@@ -78,7 +97,7 @@ export default function GoogleSetupScreen() {
 
       <TouchableOpacity style={styles.helpToggle} onPress={() => setShowHelp(h => !h)}>
         <Ionicons name={showHelp ? 'chevron-up' : 'chevron-down'} size={16} color={COLORS.primary} />
-        <Text style={styles.helpToggleText}>How to get a Client ID?</Text>
+        <Text style={styles.helpToggleText}>How to get credentials?</Text>
       </TouchableOpacity>
 
       {showHelp && (
@@ -104,9 +123,7 @@ export default function GoogleSetupScreen() {
             <Ionicons name="information-circle" size={16} color={COLORS.info} />
             <Text style={styles.infoText}>
               Redirect URI to add:{'\n'}
-              <Text style={styles.code}>https://auth.expo.io/@your-username/healthplus-gdrive</Text>
-              {'\n'}and{'\n'}
-              <Text style={styles.code}>healthplus-gdrive://oauth2redirect</Text>
+              <Text style={styles.code}>https://dist-one-lemon-81.vercel.app</Text>
             </Text>
           </View>
         </View>
@@ -115,7 +132,7 @@ export default function GoogleSetupScreen() {
       <View style={styles.privacyBox}>
         <Ionicons name="shield-checkmark" size={18} color={COLORS.success} />
         <Text style={styles.privacyText}>
-          HealthPlus only requests access to files it creates. Your Client ID is stored securely on this device.
+          Your credentials are stored only on this device. HealthPlus only requests access to files it creates.
         </Text>
       </View>
     </ScrollView>
@@ -127,9 +144,9 @@ const STEPS = [
   { text: 'Enable "Google Sheets API" and "Google Drive API" from the API Library.' },
   { text: 'Go to Credentials → Create Credentials → OAuth 2.0 Client ID.' },
   { text: 'Choose "Web application" as the type.' },
-  { text: 'Add the redirect URIs shown below to the "Authorised redirect URIs" list.' },
-  { text: 'Configure the OAuth consent screen (External, add your email as test user).' },
-  { text: 'Copy the Client ID and paste it above.' },
+  { text: 'Add your Vercel URL to "Authorised redirect URIs" (see below).' },
+  { text: 'Configure OAuth consent screen → External → add your email as test user.' },
+  { text: 'After creating, click the credential to see both Client ID and Client Secret.' },
 ];
 
 const styles = StyleSheet.create({

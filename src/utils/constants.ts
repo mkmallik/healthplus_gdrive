@@ -39,6 +39,7 @@ export const SHEETS_TOKEN_KEY = 'google_access_token';
 export const SHEETS_REFRESH_TOKEN_KEY = 'google_refresh_token';
 export const SHEETS_TOKEN_EXPIRY_KEY = 'google_token_expiry';
 export const SHEETS_CLIENT_ID_KEY = 'google_client_id';
+export const SHEETS_CLIENT_SECRET_KEY = 'google_client_secret';
 export const SPREADSHEET_ID_KEY = 'healthplus_spreadsheet_id';
 export const USER_NAME_KEY = 'user_display_name';
 export const USER_EMAIL_KEY = 'user_email';
@@ -46,3 +47,4 @@ export const USER_EMAIL_KEY = 'user_email';
 export const OPENAI_API_KEY_STORE = 'openai_api_key';
 export const DRIVE_FOLDER_ID_KEY = 'healthplus_drive_folder_id';
 export const GDRIVE_PREFIX = 'gdrive:';
+
