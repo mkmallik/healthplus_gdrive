@@ -1,41 +1,39 @@
 #!/usr/bin/env python3
 """Run after `npx expo export --platform web` to patch dist/index.html."""
-import glob, os
+import glob, os, shutil
 
 dist = os.path.join(os.path.dirname(__file__), 'dist')
 
-ionicons = glob.glob(f'{dist}/**/Ionicons*.ttf', recursive=True)
-font_path = ionicons[0].replace(dist + '/', '') if ionicons else ''
+# Copy Ionicons font to a stable path so Font.loadAsync('/fonts/Ionicons.ttf') works
+ionicons_src = glob.glob(f'{dist}/**/Ionicons*.ttf', recursive=True)
+fonts_dir = os.path.join(dist, 'fonts')
+os.makedirs(fonts_dir, exist_ok=True)
+if ionicons_src:
+    shutil.copy(ionicons_src[0], os.path.join(fonts_dir, 'Ionicons.ttf'))
+    print(f'Copied font to dist/fonts/Ionicons.ttf')
 
-extra = f"""
+extra = """
     <style>
-      @font-face {{
-        font-family: 'Ionicons';
-        src: url('/{font_path}') format('truetype');
-        font-weight: normal;
-        font-style: normal;
-        font-display: block;
-      }}
-      @media (min-width: 500px) {{
-        body {{
+      @media (min-width: 500px) {
+        body {
           background: #111 !important;
           display: flex;
           justify-content: center;
-        }}
-        #root {{
+        }
+        #root {
           max-width: 430px;
           width: 100%;
           position: relative;
           box-shadow: 0 0 40px rgba(0,0,0,0.5);
-        }}
-      }}
+        }
+      }
     </style>"""
 
 index = os.path.join(dist, 'index.html')
 html = open(index).read()
-if '@font-face' not in html:
+if 'max-width: 430px' not in html:
     html = html.replace('</head>', extra + '\n  </head>')
     open(index, 'w').write(html)
-    print(f'Patched index.html (font: {font_path})')
+    print('Patched index.html with portrait layout')
 else:
     print('Already patched, skipping.')

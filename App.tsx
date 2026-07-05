@@ -208,7 +208,7 @@ function AppNavigator() {
 
 export default function App() {
   useEffect(() => {
-    Font.loadAsync(Ionicons.font).catch(() => {});
+    Font.loadAsync({ Ionicons: '/fonts/Ionicons.ttf' }).catch(() => {});
   }, []);
   return (
     <DriveProvider>
