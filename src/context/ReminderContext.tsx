@@ -108,13 +108,13 @@ export function ReminderProvider({ children }: { children: React.ReactNode }) {
       loopRef.current = true;
 
       if (Platform.OS !== "web") {
-        Vibration.vibrate([0, 500, 200, 500, 200, 500], true);
+        if (typeof Vibration.vibrate === "function") Vibration.vibrate([0, 500, 200, 500, 200, 500], true);
       }
 
       animRef.current = Animated.loop(
         Animated.sequence([
-          Animated.timing(pulseAnim, { toValue: 1.2, duration: 500, useNativeDriver: true }),
-          Animated.timing(pulseAnim, { toValue: 1, duration: 500, useNativeDriver: true }),
+          Animated.timing(pulseAnim, { toValue: 1.2, duration: 500, useNativeDriver: false }),
+          Animated.timing(pulseAnim, { toValue: 1, duration: 500, useNativeDriver: false }),
         ])
       );
       animRef.current.start();
@@ -139,7 +139,7 @@ export function ReminderProvider({ children }: { children: React.ReactNode }) {
 
     return () => {
       loopRef.current = false;
-      Vibration.cancel();
+      if (typeof Vibration.cancel === "function") Vibration.cancel();
       if (animRef.current) {
         animRef.current.stop();
         pulseAnim.setValue(1);
@@ -148,7 +148,7 @@ export function ReminderProvider({ children }: { children: React.ReactNode }) {
   }, [showAlarm, alarmReminder]);
 
   const stopAlarm = useCallback(async () => {
-    Vibration.cancel();
+    if (typeof Vibration.cancel === "function") Vibration.cancel();
     if (animRef.current) {
       animRef.current.stop();
       pulseAnim.setValue(1);
