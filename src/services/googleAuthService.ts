@@ -2,6 +2,7 @@ import * as SecureStore from '../utils/secureStorage';
 import * as WebBrowser from 'expo-web-browser';
 import * as Crypto from 'expo-crypto';
 import * as AuthSession from 'expo-auth-session';
+import { Platform } from 'react-native';
 import {
   SHEETS_TOKEN_KEY,
   SHEETS_REFRESH_TOKEN_KEY,
@@ -85,7 +86,9 @@ async function generatePKCE(): Promise<{ verifier: string; challenge: string }> 
 // ── Sign-in flow ──────────────────────────────────────────────────────────────
 
 export async function signInWithGoogle(clientId: string): Promise<GoogleTokens> {
-  const redirectUri = AuthSession.makeRedirectUri({ scheme: 'healthplus-gdrive', path: 'oauth2redirect' });
+  const redirectUri = Platform.OS === 'web'
+    ? window.location.origin
+    : AuthSession.makeRedirectUri({ scheme: 'healthplus-gdrive', path: 'oauth2redirect' });
   const { verifier, challenge } = await generatePKCE();
 
   const params = new URLSearchParams({
