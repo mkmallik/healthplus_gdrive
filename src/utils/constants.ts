@@ -17,6 +17,14 @@ export const COLORS = {
   carbs: '#FFD93D',
   fat: '#6BCB77',
   fiber: '#4D96FF',
+  primaryLight: '#00e5cc22',
+  calories: '#FF6B6B',
+  exercise: '#FF4081',
+  steps: '#26C6DA',
+  weight: '#A1887F',
+  accent: '#00D4AA',
+  streak: '#FF9800',
+  snack: '#FFB74D',
 };
 
 export const MEAL_TYPES = ['breakfast', 'lunch', 'dinner', 'snack'] as const;
@@ -48,3 +56,43 @@ export const OPENAI_API_KEY_STORE = 'openai_api_key';
 export const DRIVE_FOLDER_ID_KEY = 'healthplus_drive_folder_id';
 export const GDRIVE_PREFIX = 'gdrive:';
 
+
+export const MEAL_ORDER = ['breakfast', 'lunch', 'dinner', 'snack'];
+
+export const EXERCISE_TYPES: Record<string, string> = {
+  walking: 'Walking',
+  running: 'Running',
+  cycling: 'Cycling',
+  swimming: 'Swimming',
+  strength: 'Strength',
+  yoga: 'Yoga',
+  hiit: 'HIIT',
+  other: 'Other',
+};
+
+export function getScoreColor(score?: number): string {
+  if (!score) return '#888';
+  if (score >= 80) return '#4CAF50';
+  if (score >= 60) return '#FFB74D';
+  return '#FF5252';
+}
+
+export function getSpikeColor(risk?: string): string {
+  if (!risk) return '#888';
+  if (risk === 'low') return '#4CAF50';
+  if (risk === 'medium') return '#FFB74D';
+  return '#FF5252';
+}
+
+// Extra COLORS properties used by screens
+export const EXTRA_COLORS = {
+  primaryLight: '#00e5cc22',
+  calories: '#FF6B6B',
+  exercise: '#FF4081',
+  steps: '#26C6DA',
+  weight: '#A1887F',
+  accent: '#00D4AA',
+  streak: '#FF9800',
+  snack: '#FFB74D',
+  info: '#29B6F6',
+};

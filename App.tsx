@@ -206,11 +206,34 @@ function AppNavigator() {
   );
 }
 
+
+class ErrorBoundary extends React.Component<{children: React.ReactNode}, {error: string | null}> {
+  constructor(props: any) {
+    super(props);
+    this.state = { error: null };
+  }
+  componentDidCatch(e: any) {
+    this.setState({ error: e?.message || String(e) });
+  }
+  static getDerivedStateFromError(e: any) {
+    return { error: e?.message || String(e) };
+  }
+  render() {
+    if (this.state.error) {
+      return React.createElement(View, { style: { flex: 1, justifyContent: "center", alignItems: "center", padding: 24, backgroundColor: "#0a0a0a" } },
+        React.createElement(Text, { style: { color: "#ff4757", fontSize: 14, fontFamily: "monospace", textAlign: "center" } }, "CRASH: " + this.state.error)
+      );
+    }
+    return this.props.children;
+  }
+}
+
 export default function App() {
   useEffect(() => {
     Font.loadAsync({ Ionicons: '/fonts/Ionicons.ttf' }).catch(() => {});
   }, []);
   return (
+    <ErrorBoundary>
     <DriveProvider>
       <AuthProvider>
         <ToastProvider>
@@ -222,5 +245,6 @@ export default function App() {
         </ToastProvider>
       </AuthProvider>
     </DriveProvider>
+    </ErrorBoundary>
   );
 }
