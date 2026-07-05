@@ -38,3 +38,13 @@ export async function deleteTodo(id: number): Promise<void> {
 export async function archiveTodo(id: number): Promise<void> {
   await db.update('todo_items', id, { is_archived: 1 });
 }
+
+export async function createTodo(habitId: number, text: string, _dateStr?: string): Promise<any> {
+  return addTodo(habitId, text);
+}
+
+export async function updateTodo(habitId: number, itemId: number, data: { is_done?: boolean }, _dateStr?: string): Promise<any> {
+  return db.update('todo_items', itemId, {
+    ...(data.is_done !== undefined ? { is_done: data.is_done ? 1 : 0 } : {}),
+  });
+}

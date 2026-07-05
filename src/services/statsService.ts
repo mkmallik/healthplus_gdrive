@@ -74,3 +74,43 @@ export async function getExerciseSummary(days: number = 30): Promise<any> {
     }, {}),
   };
 }
+
+export async function getStreaks(): Promise<any> {
+  const logs = db.findWhere('habit_logs', (r: any) => r.user_id === 1) as any[];
+  const dates = [...new Set(logs.map((l: any) => l.date))].sort().reverse();
+  if (dates.length === 0) return { overall: { current_streak: 0, best_streak: 0 } };
+
+  const todayStr = new Date().toISOString().split('T')[0];
+  let current = 0;
+  let best = 0;
+  let streak = 0;
+  let cur = new Date(todayStr);
+
+  for (const d of dates) {
+    const expected = cur.toISOString().split('T')[0];
+    if (d === expected) {
+      streak++;
+      cur.setDate(cur.getDate() - 1);
+    } else if (d < expected) {
+      break;
+    }
+  }
+  current = streak;
+
+  // calc best streak
+  let tempStreak = 1;
+  const sorted = [...dates].sort();
+  for (let i = 1; i < sorted.length; i++) {
+    const prev = new Date(sorted[i - 1]);
+    prev.setDate(prev.getDate() + 1);
+    if (prev.toISOString().split('T')[0] === sorted[i]) {
+      tempStreak++;
+      best = Math.max(best, tempStreak);
+    } else {
+      tempStreak = 1;
+    }
+  }
+  best = Math.max(best, current);
+
+  return { overall: { current_streak: current, best_streak: best } };
+}

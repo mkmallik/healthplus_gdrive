@@ -67,3 +67,48 @@ export async function getWeeklyData(): Promise<any[]> {
   }
   return result;
 }
+
+export async function getDailySummary(dateStr: string): Promise<any> {
+  const goal = db.findFirst('goals', (r: any) => r.user_id === 1 && Number(r.is_active) === 1) as any;
+  const meals = db.findWhere('meals', (r: any) => r.user_id === 1 && r.date === dateStr) as any[];
+  const allFoods = db.findWhere('foods', (f: any) => meals.some((m: any) => m.id === f.meal_id)) as any[];
+
+  const mealData = meals.map((m: any) => {
+    const foods = allFoods.filter((f: any) => f.meal_id === m.id);
+    return {
+      id: m.id,
+      meal_type: m.meal_type,
+      foods,
+      total_calories: foods.reduce((s: number, f: any) => s + (Number(f.calories) || 0), 0),
+      total_protein: foods.reduce((s: number, f: any) => s + (Number(f.protein) || 0), 0),
+      total_carbs: foods.reduce((s: number, f: any) => s + (Number(f.carbs) || 0), 0),
+      total_fat: foods.reduce((s: number, f: any) => s + (Number(f.fat) || 0), 0),
+    };
+  });
+
+  const exercises = db.findWhere('exercises', (r: any) => r.user_id === 1 && r.date === dateStr) as any[];
+  const steps = db.findFirst('step_entries', (r: any) => r.user_id === 1 && r.date === dateStr) as any;
+  const bodyMetrics = db.findWhere('body_metrics', (r: any) => r.user_id === 1).sort((a: any, b: any) => b.date.localeCompare(a.date)) as any[];
+
+  const totalCalories = allFoods.reduce((s: number, f: any) => s + (Number(f.calories) || 0), 0);
+  const totalProtein = allFoods.reduce((s: number, f: any) => s + (Number(f.protein) || 0), 0);
+  const totalCarbs = allFoods.reduce((s: number, f: any) => s + (Number(f.carbs) || 0), 0);
+  const totalFat = allFoods.reduce((s: number, f: any) => s + (Number(f.fat) || 0), 0);
+  const exerciseCalsBurned = exercises.reduce((s: number, e: any) => s + (Number(e.calories_burned) || 0), 0);
+
+  return {
+    goal,
+    meals: mealData,
+    total_calories: totalCalories,
+    total_protein: totalProtein,
+    total_carbs: totalCarbs,
+    total_fat: totalFat,
+    exercise_summary: {
+      exercises,
+      total_calories_burned: exerciseCalsBurned,
+    },
+    step_summary: steps || { step_count: 0 },
+    body_metrics: bodyMetrics,
+    calories_burned: { total: exerciseCalsBurned },
+  };
+}
