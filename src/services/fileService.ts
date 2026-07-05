@@ -255,3 +255,7 @@ export async function clearLocalCache(): Promise<void> {
 export function isDriveRef(fileRef: string): boolean {
   return fileRef?.startsWith(GDRIVE_PREFIX) ?? false;
 }
+
+export function getFilesDir(): string {
+  return "";
+}
