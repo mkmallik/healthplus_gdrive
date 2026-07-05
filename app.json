@@ -1,0 +1,59 @@
+{
+  "expo": {
+    "name": "HealthPlus",
+    "slug": "healthplus-gdrive",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./src/assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "scheme": "healthplus-gdrive",
+    "splash": {
+      "image": "./src/assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#121212"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.healthplus.gdrive",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Used to photograph meals for nutrition tracking",
+        "NSMicrophoneUsageDescription": "Used to record voice logs for food and exercise",
+        "NSPhotoLibraryUsageDescription": "Used to select food photos from your library"
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./src/assets/adaptive-icon.png",
+        "backgroundColor": "#121212"
+      },
+      "package": "com.healthplus.gdrive",
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.INTERNET"
+      ]
+    },
+    "web": {
+      "favicon": "./src/assets/favicon.png"
+    },
+    "plugins": [
+      "expo-secure-store",
+      "expo-camera",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Used to select food photos",
+          "cameraPermission": "Used to photograph meals"
+        }
+      ],
+      [
+        "expo-av",
+        {
+          "microphonePermission": "Used to record voice logs"
+        }
+      ]
+    ]
+  }
+}
