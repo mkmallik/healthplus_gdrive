@@ -8,6 +8,7 @@ import {
   setClientId,
   getStoredTokens,
   getClientSecret,
+  clearClientSecret,
   setClientSecret,
 } from '../services/googleAuthService';
 import { getOrCreateSpreadsheet, clearSpreadsheetId, getSpreadsheetUrl } from '../services/spreadsheetSetup';
@@ -77,8 +78,10 @@ export function DriveProvider({ children }: { children: ReactNode }) {
 
       await loadSpreadsheetAndInit();
     } catch (e: any) {
-      setError(e.message || 'Initialization failed');
-      setStatus('error');
+      // Stale/invalid tokens — reset to unauthenticated so user can reconnect
+      await clearTokens().catch(() => {});
+      await clearClientSecret().catch(() => {});
+      setStatus('unauthenticated');
     }
   }
 
