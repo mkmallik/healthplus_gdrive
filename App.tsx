@@ -1,6 +1,4 @@
 import React, { useEffect } from "react";
-import * as Font from 'expo-font';
-import { Ionicons as IoniconsFontLoader } from '@expo/vector-icons';
 import { ActivityIndicator, View, Text, TouchableOpacity } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
@@ -208,8 +206,6 @@ function AppNavigator() {
 }
 
 export default function App() {
-  const [fontsLoaded] = Font.useFonts(IoniconsFontLoader.font);
-  if (!fontsLoaded) return null;
   return (
     <DriveProvider>
       <AuthProvider>
