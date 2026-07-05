@@ -94,8 +94,15 @@ export function DriveProvider({ children }: { children: ReactNode }) {
       await initDB();
       setStatus('ready');
     } catch (e: any) {
-      setError(e.message || 'Failed to load data');
-      setStatus('error');
+      const msg = e.message || '';
+      if (msg.includes('refresh') || msg.includes('invalid_request') || msg.includes('TOKEN_EXPIRED') || msg.includes('NOT_AUTHENTICATED')) {
+        await clearTokens().catch(() => {});
+        await clearClientSecret().catch(() => {});
+        setStatus('unauthenticated');
+      } else {
+        setError(msg || 'Failed to load data');
+        setStatus('error');
+      }
     }
   }
 
