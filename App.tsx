@@ -1,4 +1,5 @@
 import React, { useEffect } from "react";
+import * as Font from 'expo-font';
 import { ActivityIndicator, View, Text, TouchableOpacity } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
@@ -206,6 +207,9 @@ function AppNavigator() {
 }
 
 export default function App() {
+  useEffect(() => {
+    Font.loadAsync(Ionicons.font).catch(() => {});
+  }, []);
   return (
     <DriveProvider>
       <AuthProvider>
