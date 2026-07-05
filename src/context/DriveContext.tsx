@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
-import * as SecureStore from 'expo-secure-store';
+import * as SecureStore from '../utils/secureStorage';
 import {
   isAuthenticated,
   signInWithGoogle,

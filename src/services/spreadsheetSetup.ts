@@ -3,7 +3,7 @@
  * Sets up all sheet tabs with the correct header rows.
  */
 
-import * as SecureStore from 'expo-secure-store';
+import * as SecureStore from '../utils/secureStorage';
 import { getValidAccessToken } from './googleAuthService';
 import { SHEET_HEADERS } from './sheetsDB';
 import { SPREADSHEET_ID_KEY } from '../utils/constants';

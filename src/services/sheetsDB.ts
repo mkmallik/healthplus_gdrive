@@ -11,7 +11,7 @@
  * Row format: every table has an `id` column (auto-increment integer) as col 0.
  */
 
-import * as SecureStore from 'expo-secure-store';
+import * as SecureStore from '../utils/secureStorage';
 import { getValidAccessToken } from './googleAuthService';
 import { SPREADSHEET_ID_KEY } from '../utils/constants';
 

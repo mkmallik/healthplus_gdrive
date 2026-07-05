@@ -1,4 +1,4 @@
-import * as SecureStore from 'expo-secure-store';
+import * as SecureStore from '../utils/secureStorage';
 import * as FileSystem from 'expo-file-system';
 
 const API_KEY_STORE = 'openai_api_key';

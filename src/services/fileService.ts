@@ -14,7 +14,7 @@
  */
 
 import * as FileSystem from 'expo-file-system';
-import * as SecureStore from 'expo-secure-store';
+import * as SecureStore from '../utils/secureStorage';
 import { getValidAccessToken } from './googleAuthService';
 import { DRIVE_FOLDER_ID_KEY, GDRIVE_PREFIX } from '../utils/constants';
 
