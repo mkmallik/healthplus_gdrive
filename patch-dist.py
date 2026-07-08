@@ -33,27 +33,22 @@ if ionicons_src:
 
 extra = """
     <style>
-      @media (min-width: 500px) {
-        body {
-          background: #111 !important;
-          display: flex;
-          justify-content: center;
-        }
-        #root {
-          max-width: 430px;
-          width: 100%;
-          position: relative;
-          box-shadow: 0 0 40px rgba(0,0,0,0.5);
-        }
+      body { background: #111 !important; margin: 0; padding: 0; }
+      #root { width: 100%; height: 100vh; display: flex; flex-direction: column; }
+      /* Mobile: cap width and center like a phone */
+      @media (max-width: 767px) {
+        body { display: flex; justify-content: center; }
+        #root { max-width: 430px; }
       }
     </style>"""
 
 
 index = os.path.join(dist, 'index.html')
 html = open(index).read()
-if 'max-width: 430px' not in html:
-    html = html.replace('</head>', extra + '\n  </head>')
-    open(index, 'w').write(html)
-    print('Patched index.html with portrait layout')
-else:
-    print('Already patched, skipping.')
+if 'max-width: 430px' in html:
+    # Remove old portrait-only patch
+    import re
+    html = re.sub(r'<style>[\s\S]*?max-width: 430px[\s\S]*?</style>', '', html)
+html = html.replace('</head>', extra + '\n  </head>')
+open(index, 'w').write(html)
+print('Patched index.html with responsive layout')
