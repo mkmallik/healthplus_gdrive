@@ -9,11 +9,27 @@ ionicons_src = glob.glob(f'{dist}/**/Ionicons*.ttf', recursive=True)
 fonts_dir = os.path.join(dist, 'fonts')
 os.makedirs(fonts_dir, exist_ok=True)
 if ionicons_src:
-    # Copy to stable path used by Font.loadAsync
-    shutil.copy(ionicons_src[0], os.path.join(fonts_dir, 'Ionicons.ttf'))
-    print(f'Copied font to dist/fonts/Ionicons.ttf')
-    # Also ensure the hashed asset path exists (Vercel serves it fine, it's already there)
-    print(f'Ionicons source: {ionicons_src[0]}')
+    src = ionicons_src[0]
+    fname = os.path.basename(src)  # e.g. Ionicons.b4eb...ttf
+
+    # Copy to /fonts/ (stable path for Font.loadAsync)
+    shutil.copy(src, os.path.join(fonts_dir, 'Ionicons.ttf'))
+    # Copy hashed font to /fonts/ so the bundle's reference also resolves
+    shutil.copy(src, os.path.join(fonts_dir, fname))
+    print(f'Copied font to dist/fonts/Ionicons.ttf and dist/fonts/{fname}')
+
+    # Patch JS bundle: rewrite node_modules path → /fonts/
+    # Vercel skips node_modules dirs in static deployments, so font 404s
+    old_path = f'assets/node_modules/%40expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/{fname}'
+    old_path2 = f'assets/node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/{fname}'
+    new_path = f'fonts/{fname}'
+    js_files = glob.glob(f'{dist}/_expo/static/js/web/*.js')
+    for js_file in js_files:
+        content = open(js_file, 'rb').read().decode('utf-8', errors='replace')
+        patched = content.replace(old_path, new_path).replace(old_path2, new_path)
+        if patched != content:
+            open(js_file, 'w', encoding='utf-8').write(patched)
+            print(f'Patched font path in {os.path.basename(js_file)}')
 
 extra = """
     <style>
