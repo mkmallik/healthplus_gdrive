@@ -109,19 +109,27 @@ export async function getDailySummary(dateStr: string): Promise<any> {
   const latestWeight = bodyMetrics.find((m: any) => (m.metric_type || '').toLowerCase() === 'weight');
   const rawWeightVal = latestWeight ? Number(latestWeight.value) : NaN;
   const weightKg = isNaN(rawWeightVal) ? 70 : rawWeightVal;
-  // Convert lbs to kg if unit is lb/lbs
   const weightKgNorm = latestWeight && /^lb/i.test(latestWeight.unit || '') ? weightKg * 0.453592 : weightKg;
-  const bmr = Math.round(10 * (weightKgNorm || 70) + 6.25 * 170 - 5 * 30 + 5);
+  const fullDayBmr = Math.round(10 * (weightKgNorm || 70) + 6.25 * 170 - 5 * 30 + 5);
+
+  // Prorate BMR to current time for today; use full day BMR for past dates
+  const todayStr = today();
+  let bmr: number;
+  if (dateStr === todayStr) {
+    const now = new Date();
+    const minutesElapsed = now.getHours() * 60 + now.getMinutes();
+    const dayFraction = Math.min(minutesElapsed / 1440, 1);
+    bmr = Math.round(fullDayBmr * dayFraction);
+  } else {
+    bmr = fullDayBmr;
+  }
 
   // Steps calories: ~0.04 kcal/step beyond what walking exercise already covers
   const stepCount = Number(steps?.step_count) || 0;
-  // Only add step burn if there's no auto-logged walking exercise for today
   const hasWalkingExercise = exercises.some((e: any) => (e.exercise_type || '').toLowerCase() === 'walking');
   const stepsCals = hasWalkingExercise ? 0 : Math.round(stepCount * 0.04);
 
   const totalBurned = bmr + exerciseCalsBurned + stepsCals;
-
-  console.log('[getDailySummary] calories_burned debug:', { bmr, exerciseCalsBurned, stepsCals, totalBurned, weightKg, weightKgNorm, latestWeight: latestWeight ? { type: latestWeight.metric_type, value: latestWeight.value, unit: latestWeight.unit } : null });
 
   return {
     goal,
