@@ -112,14 +112,13 @@ export async function getDailySummary(dateStr: string): Promise<any> {
   const weightKgNorm = latestWeight && /^lb/i.test(latestWeight.unit || '') ? weightKg * 0.453592 : weightKg;
   const fullDayBmr = Math.round(10 * (weightKgNorm || 70) + 6.25 * 170 - 5 * 30 + 5);
 
-  // Prorate BMR to current time for today; use full day BMR for past dates
-  const todayStr = today();
+  // Prorate BMR to current time — dateStr compared to today using local date
+  const now = new Date();
+  const localDateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
   let bmr: number;
-  if (dateStr === todayStr) {
-    const now = new Date();
+  if (dateStr === localDateStr) {
     const minutesElapsed = now.getHours() * 60 + now.getMinutes();
-    const dayFraction = Math.min(minutesElapsed / 1440, 1);
-    bmr = Math.round(fullDayBmr * dayFraction);
+    bmr = Math.round(fullDayBmr * Math.min(minutesElapsed / 1440, 1));
   } else {
     bmr = fullDayBmr;
   }

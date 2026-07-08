@@ -52,8 +52,8 @@ export default function FoodExerciseTab({ selectedDate, isToday, dateStr }: TabP
       setData(results[0]);
       if (isToday && results[1]) setStreaks(results[1]);
       else if (!isToday) setStreaks(null);
-    } catch {
-      // silent
+    } catch (e: any) {
+      console.error('[FoodExerciseTab] fetchData error:', e?.message || e);
     } finally {
       setLoading(false);
       setRefreshing(false);
