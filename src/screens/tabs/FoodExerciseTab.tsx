@@ -285,7 +285,7 @@ export default function FoodExerciseTab({ selectedDate, isToday, dateStr }: TabP
                       <Text style={styles.burnedRowHint}>Resting metabolism</Text>
                     </View>
                     <Text style={[styles.burnedRowValue, { color: "#7E57C2" }]}>
-                      {Math.round(caloriesBurnedData.bmr)}
+                      {Math.round(caloriesBurnedData.bmr || 0)}
                     </Text>
                   </View>
                   <View style={styles.burnedRow}>
@@ -296,12 +296,12 @@ export default function FoodExerciseTab({ selectedDate, isToday, dateStr }: TabP
                       <Text style={styles.burnedRowLabel}>Exercise</Text>
                       <Text style={styles.burnedRowHint}>
                         {(exerciseSummary?.total_exercises ?? 0) > 0
-                          ? `${exerciseSummary!.total_exercises} session${exerciseSummary!.total_exercises > 1 ? "s" : ""}, ${Math.round(exerciseSummary!.total_duration_minutes)} min`
+                          ? `${exerciseSummary!.total_exercises} session${exerciseSummary!.total_exercises > 1 ? "s" : ""}, ${Math.round(exerciseSummary!.total_duration_minutes || 0)} min`
                           : "No sessions today"}
                       </Text>
                     </View>
                     <Text style={[styles.burnedRowValue, { color: COLORS.exercise }]}>
-                      {Math.round(caloriesBurnedData.exercise)}
+                      {Math.round(caloriesBurnedData.exercise || 0)}
                     </Text>
                   </View>
                   <View style={styles.burnedRow}>
@@ -317,7 +317,7 @@ export default function FoodExerciseTab({ selectedDate, isToday, dateStr }: TabP
                       </Text>
                     </View>
                     <Text style={[styles.burnedRowValue, { color: COLORS.steps }]}>
-                      {Math.round(caloriesBurnedData.steps)}
+                      {Math.round(caloriesBurnedData.steps || 0)}
                     </Text>
                   </View>
                 </View>

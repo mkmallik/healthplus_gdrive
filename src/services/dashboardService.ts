@@ -97,12 +97,21 @@ export async function getDailySummary(dateStr: string): Promise<any> {
   const exerciseCalsBurned = exercises.reduce((s: number, e: any) => s + (Number(e.calories_burned) || 0), 0);
   const totalDurationMinutes = exercises.reduce((s: number, e: any) => s + (Number(e.duration_minutes) || 0), 0);
 
+  // Normalize exercise rows so UI gets proper numbers (not raw sheet strings)
+  const normalizedExercises = exercises.map((e: any) => ({
+    ...e,
+    duration_minutes: Number(e.duration_minutes) || 0,
+    calories_burned: Number(e.calories_burned) || 0,
+    intensity: e.intensity || 'moderate',
+  }));
+
   // BMR using Mifflin-St Jeor (weight only; assume 170cm height, 30yr age, male defaults)
-  const latestWeight = bodyMetrics.find((m: any) => m.metric_type === 'weight');
-  const weightKg = latestWeight ? Number(latestWeight.value) : 70;
+  const latestWeight = bodyMetrics.find((m: any) => (m.metric_type || '').toLowerCase() === 'weight');
+  const rawWeightVal = latestWeight ? Number(latestWeight.value) : NaN;
+  const weightKg = isNaN(rawWeightVal) ? 70 : rawWeightVal;
   // Convert lbs to kg if unit is lb/lbs
   const weightKgNorm = latestWeight && /^lb/i.test(latestWeight.unit || '') ? weightKg * 0.453592 : weightKg;
-  const bmr = Math.round(10 * weightKgNorm + 6.25 * 170 - 5 * 30 + 5);
+  const bmr = Math.round(10 * (weightKgNorm || 70) + 6.25 * 170 - 5 * 30 + 5);
 
   // Steps calories: ~0.04 kcal/step beyond what walking exercise already covers
   const stepCount = Number(steps?.step_count) || 0;
@@ -120,7 +129,7 @@ export async function getDailySummary(dateStr: string): Promise<any> {
     total_carbs: totalCarbs,
     total_fat: totalFat,
     exercise_summary: {
-      exercises,
+      exercises: normalizedExercises,
       total_calories_burned: exerciseCalsBurned,
       total_exercises: exercises.length,
       total_duration_minutes: totalDurationMinutes,
