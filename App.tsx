@@ -1,7 +1,7 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import * as Font from 'expo-font';
-import { ActivityIndicator, View, Text, TouchableOpacity } from "react-native";
-import { NavigationContainer } from "@react-navigation/native";
+import { ActivityIndicator, View, Text, TouchableOpacity, Platform, useWindowDimensions } from "react-native";
+import { NavigationContainer, useNavigationState } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Ionicons } from "@expo/vector-icons";
@@ -10,6 +10,7 @@ import { AuthProvider, useAuth } from "./src/context/AuthContext";
 import { ToastProvider } from "./src/components/Toast";
 import { ReminderProvider } from "./src/context/ReminderContext";
 import { ensureDefaultHabits } from "./src/services/habitService";
+import DesktopSidebar from "./src/components/DesktopSidebar";
 
 import GoogleSetupScreen from "./src/screens/GoogleSetupScreen";
 import HomeScreen from "./src/screens/HomeScreen";
@@ -40,6 +41,8 @@ import LogsScreen from "./src/screens/LogsScreen";
 import HabitsFullScreen from "./src/screens/HabitsFullScreen";
 import TodoFullScreen from "./src/screens/TodoFullScreen";
 import ApiKeyScreen from "./src/screens/ApiKeyScreen";
+import GoalsScreen from "./src/screens/GoalsScreen";
+import DiaryScreen from "./src/screens/DiaryScreen";
 import { COLORS } from "./src/utils/constants";
 
 const Stack = createNativeStackNavigator();
@@ -66,70 +69,113 @@ function headerRightButtons(navigation: any) {
   );
 }
 
-function HomeTabs() {
-  return (
-    <Tab.Navigator
-      screenOptions={{
-        tabBarStyle: { backgroundColor: COLORS.surface, borderTopColor: COLORS.border },
-        tabBarActiveTintColor: COLORS.primary,
-        tabBarInactiveTintColor: COLORS.textSecondary,
-        headerStyle: { backgroundColor: COLORS.surface },
-        headerTintColor: COLORS.primary,
-        headerTitleStyle: { color: COLORS.text },
-      }}
-    >
-      <Tab.Screen
-        name="Today"
-        component={HomeScreen}
-        options={({ navigation }) => ({
-          tabBarIcon: ({ color, focused }) => (
-            <Ionicons name={focused ? "home" : "home-outline"} size={22} color={color} />
-          ),
-          headerRight: headerRightButtons(navigation),
-        })}
-      />
-      <Tab.Screen
-        name="Habits"
-        component={HabitsFullScreen}
-        options={({ navigation }) => ({
-          tabBarIcon: ({ color, focused }) => (
-            <Ionicons name={focused ? "checkmark-done-circle" : "checkmark-done-circle-outline"} size={22} color={color} />
-          ),
-          headerRight: headerRightButtons(navigation),
-        })}
-      />
-      <Tab.Screen
-        name="Logs"
-        component={LogsScreen}
-        options={({ navigation }) => ({
-          tabBarIcon: ({ color, focused }) => (
-            <Ionicons name={focused ? "book" : "book-outline"} size={22} color={color} />
-          ),
-          headerRight: headerRightButtons(navigation),
-        })}
-      />
-      <Tab.Screen
-        name="Todo"
-        component={TodoFullScreen}
-        options={({ navigation }) => ({
-          tabBarIcon: ({ color, focused }) => (
-            <Ionicons name={focused ? "checkbox" : "checkbox-outline"} size={22} color={color} />
-          ),
-          headerRight: headerRightButtons(navigation),
-        })}
-      />
-      <Tab.Screen
-        name="Notes"
-        component={NotesScreen}
-        options={({ navigation }) => ({
-          tabBarIcon: ({ color, focused }) => (
-            <Ionicons name={focused ? "create" : "create-outline"} size={22} color={color} />
-          ),
-          headerRight: headerRightButtons(navigation),
-        })}
-      />
-    </Tab.Navigator>
+function HomeTabsInner({ navigation }: { navigation: any }) {
+  const { width } = useWindowDimensions();
+  const isDesktop = Platform.OS === "web" && width >= 768;
+  const routeName = useNavigationState(
+    (state) => state?.routes?.[state?.index ?? 0]?.name ?? "Today"
   );
+
+  return (
+    <View style={{ flex: 1, flexDirection: "row" }}>
+      {isDesktop && (
+        <DesktopSidebar
+          activeTab={routeName}
+          onTabPress={(tabName) => navigation.navigate(tabName)}
+          onStackPress={(screenName) => navigation.getParent()?.navigate(screenName)}
+        />
+      )}
+      <View style={{ flex: 1 }}>
+        <Tab.Navigator
+          screenOptions={{
+            tabBarStyle: isDesktop
+              ? { display: "none" }
+              : { backgroundColor: COLORS.surface, borderTopColor: COLORS.border },
+            tabBarActiveTintColor: COLORS.primary,
+            tabBarInactiveTintColor: COLORS.textSecondary,
+            headerStyle: { backgroundColor: COLORS.surface },
+            headerTintColor: COLORS.primary,
+            headerTitleStyle: { color: COLORS.text },
+          }}
+        >
+          <Tab.Screen
+            name="Today"
+            component={HomeScreen}
+            options={({ navigation: nav }) => ({
+              tabBarIcon: ({ color, focused }) => (
+                <Ionicons name={focused ? "home" : "home-outline"} size={22} color={color} />
+              ),
+              headerRight: headerRightButtons(nav),
+            })}
+          />
+          <Tab.Screen
+            name="Habits"
+            component={HabitsFullScreen}
+            options={({ navigation: nav }) => ({
+              tabBarIcon: ({ color, focused }) => (
+                <Ionicons name={focused ? "checkmark-done-circle" : "checkmark-done-circle-outline"} size={22} color={color} />
+              ),
+              headerRight: headerRightButtons(nav),
+            })}
+          />
+          <Tab.Screen
+            name="Logs"
+            component={LogsScreen}
+            options={({ navigation: nav }) => ({
+              tabBarIcon: ({ color, focused }) => (
+                <Ionicons name={focused ? "book" : "book-outline"} size={22} color={color} />
+              ),
+              headerRight: headerRightButtons(nav),
+            })}
+          />
+          <Tab.Screen
+            name="Todo"
+            component={TodoFullScreen}
+            options={({ navigation: nav }) => ({
+              tabBarIcon: ({ color, focused }) => (
+                <Ionicons name={focused ? "checkbox" : "checkbox-outline"} size={22} color={color} />
+              ),
+              headerRight: headerRightButtons(nav),
+            })}
+          />
+          <Tab.Screen
+            name="Notes"
+            component={NotesScreen}
+            options={({ navigation: nav }) => ({
+              tabBarIcon: ({ color, focused }) => (
+                <Ionicons name={focused ? "create" : "create-outline"} size={22} color={color} />
+              ),
+              headerRight: headerRightButtons(nav),
+            })}
+          />
+          <Tab.Screen
+            name="Goals"
+            component={GoalsScreen}
+            options={({ navigation: nav }) => ({
+              tabBarIcon: ({ color, focused }) => (
+                <Ionicons name={focused ? "flag" : "flag-outline"} size={22} color={color} />
+              ),
+              headerRight: headerRightButtons(nav),
+            })}
+          />
+          <Tab.Screen
+            name="Diary"
+            component={DiaryScreen}
+            options={({ navigation: nav }) => ({
+              tabBarIcon: ({ color, focused }) => (
+                <Ionicons name={focused ? "journal" : "journal-outline"} size={22} color={color} />
+              ),
+              headerRight: headerRightButtons(nav),
+            })}
+          />
+        </Tab.Navigator>
+      </View>
+    </View>
+  );
+}
+
+function HomeTabs({ navigation }: { navigation: any }) {
+  return <HomeTabsInner navigation={navigation} />;
 }
 
 function AppNavigator() {
@@ -206,6 +252,8 @@ function AppNavigator() {
           <Stack.Screen name="CreateReminder" component={ReminderCreateScreen} options={{ title: "Set Reminder" }} />
           <Stack.Screen name="NoteEditor" component={NoteEditorScreen} options={{ title: "Note" }} />
           <Stack.Screen name="ApiKey" component={ApiKeyScreen} options={{ title: "OpenAI API Key" }} />
+          <Stack.Screen name="GoalsList" component={GoalsScreen} options={{ title: "Goals" }} />
+          <Stack.Screen name="Diary" component={DiaryScreen} options={{ title: "Diary" }} />
         </>
       ) : (
         <Stack.Screen name="GoogleSetup" component={GoogleSetupScreen} options={{ headerShown: false }} />

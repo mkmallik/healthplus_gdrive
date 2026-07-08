@@ -91,7 +91,16 @@ export default function LogsTab({ selectedDate, isToday, dateStr }: TabProps) {
   const [refreshing, setRefreshing] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const offsetRef = useRef(0);
+
+  const toggleExpand = (id: string) => {
+    setExpandedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
 
   const fetchData = useCallback(async (append = false) => {
     try {
@@ -331,26 +340,57 @@ export default function LogsTab({ selectedDate, isToday, dateStr }: TabProps) {
               <Ionicons name="fitness" size={18} color={COLORS.exercise} />
               <Text style={styles.exerciseSectionTitle}>Exercises</Text>
             </View>
-            {exercises.map((ex: any) => (
-              <View key={ex.id} style={styles.exerciseCard}>
-                <View style={styles.exerciseCardHeader}>
-                  <View style={[styles.exerciseBadge, { backgroundColor: COLORS.exercise + "20" }]}>
-                    <Text style={[styles.exerciseBadgeText, { color: COLORS.exercise }]}>
-                      {ex.exercise_type || "Exercise"}
+            {exercises.map((ex: any) => {
+              const exId = `ex-${ex.id}`;
+              const isExpanded = expandedIds.has(exId);
+              const muscleGroups = ex.muscle_groups ? String(ex.muscle_groups) : "";
+              return (
+                <TouchableOpacity
+                  key={ex.id}
+                  style={styles.exerciseCard}
+                  onPress={() => toggleExpand(exId)}
+                  activeOpacity={0.85}
+                >
+                  <View style={styles.exerciseCardHeader}>
+                    <View style={[styles.exerciseBadge, { backgroundColor: COLORS.exercise + "20" }]}>
+                      <Text style={[styles.exerciseBadgeText, { color: COLORS.exercise }]}>
+                        {ex.exercise_type || "Exercise"}
+                      </Text>
+                    </View>
+                    <Text style={styles.exerciseStats}>
+                      {Math.round(ex.duration_minutes || 0)} min / {Math.round(ex.calories_burned || 0)} kcal
                     </Text>
+                    <Ionicons
+                      name={isExpanded ? "chevron-up" : "chevron-down"}
+                      size={14}
+                      color={COLORS.textSecondary}
+                      style={{ marginLeft: 4 }}
+                    />
                   </View>
-                  <Text style={styles.exerciseStats}>
-                    {Math.round(ex.duration_minutes || 0)} min / {Math.round(ex.calories_burned || 0)} kcal
-                  </Text>
-                </View>
-                {ex.description ? (
-                  <Text style={styles.exerciseDesc} numberOfLines={2}>{ex.description}</Text>
-                ) : null}
-                {ex.summary ? (
-                  <Text style={styles.exerciseSummary} numberOfLines={2}>{ex.summary}</Text>
-                ) : null}
-              </View>
-            ))}
+                  {!isExpanded && ex.description ? (
+                    <Text style={styles.exerciseDesc} numberOfLines={2}>{ex.description}</Text>
+                  ) : null}
+                  {isExpanded && (
+                    <View style={styles.exerciseExpanded}>
+                      {ex.description ? (
+                        <Text style={styles.exerciseDesc}>{ex.description}</Text>
+                      ) : null}
+                      {muscleGroups ? (
+                        <Text style={styles.exerciseMuscles}>
+                          Muscles: {muscleGroups}
+                        </Text>
+                      ) : null}
+                      {ex.intensity ? (
+                        <Text style={styles.exerciseMeta}>Intensity: {ex.intensity}</Text>
+                      ) : null}
+                      {ex.analysis ? (
+                        <Text style={styles.exerciseSummary}>{ex.analysis}</Text>
+                      ) : null}
+                    </View>
+                  )}
+                </TouchableOpacity>
+              );
+            })}
           </View>
         )}
       </ScrollView>
@@ -526,6 +566,21 @@ const styles = StyleSheet.create({
     fontStyle: "italic",
     marginTop: 2,
     lineHeight: 17,
+  },
+  exerciseExpanded: {
+    marginTop: 8,
+    gap: 4,
+  },
+  exerciseMuscles: {
+    fontSize: 12,
+    color: COLORS.steps,
+    marginTop: 4,
+    fontWeight: "600",
+  },
+  exerciseMeta: {
+    fontSize: 12,
+    color: COLORS.textSecondary,
+    marginTop: 2,
   },
   noEntriesHint: {
     flexDirection: "row",

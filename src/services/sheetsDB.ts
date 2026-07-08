@@ -32,6 +32,8 @@ export const SHEET_HEADERS: Record<string, string[]> = {
   saved_meals: ['id', 'user_id', 'name', 'created_at', 'updated_at'],
   saved_meal_items: ['id', 'saved_meal_id', 'description', 'calories', 'protein', 'carbs', 'fat', 'fiber', 'sugar', 'sodium'],
   food_library: ['id', 'user_id', 'name', 'aliases', 'calories_per_100g', 'protein_per_100g', 'carbs_per_100g', 'fat_per_100g', 'fiber_per_100g', 'sugar_per_100g', 'sodium_per_100g', 'category', 'serving_size_g', 'created_at'],
+  user_goals: ['id', 'user_id', 'title', 'description', 'goal_type', 'target_date', 'status', 'created_at'],
+  goal_habits: ['id', 'goal_id', 'habit_id', 'created_at'],
 };
 
 // ── Types ─────────────────────────────────────────────────────────────────────
