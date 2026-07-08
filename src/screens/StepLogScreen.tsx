@@ -16,6 +16,8 @@ import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import * as stepService from "../services/stepService";
+import { autoLogWalking } from "../services/exerciseService";
+import { markDefaultHabitDone } from "../services/habitService";
 import { COLORS } from "../utils/constants";
 import { useToast } from "../components/Toast";
 
@@ -157,9 +159,11 @@ export default function StepLogScreen() {
         audio = audioUri;
       }
 
-      const result = await stepService.logSteps(count, img, audio, stepDate);
+      const result = await stepService.logSteps(count ?? 0, img, audio, stepDate);
 
       showToast(`${result.step_count.toLocaleString()} steps ${existingSteps ? "updated" : "recorded"}.`, "success");
+      markDefaultHabitDone('Log Steps');
+      autoLogWalking(result.step_count, stepDate);
       navigation.navigate("Home", { screen: "Today" });
     } catch (err: any) {
       const message = err?.name === 'API_KEY_NOT_CONFIGURED'

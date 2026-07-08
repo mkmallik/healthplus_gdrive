@@ -95,6 +95,22 @@ export async function getDailySummary(dateStr: string): Promise<any> {
   const totalCarbs = allFoods.reduce((s: number, f: any) => s + (Number(f.carbs) || 0), 0);
   const totalFat = allFoods.reduce((s: number, f: any) => s + (Number(f.fat) || 0), 0);
   const exerciseCalsBurned = exercises.reduce((s: number, e: any) => s + (Number(e.calories_burned) || 0), 0);
+  const totalDurationMinutes = exercises.reduce((s: number, e: any) => s + (Number(e.duration_minutes) || 0), 0);
+
+  // BMR using Mifflin-St Jeor (weight only; assume 170cm height, 30yr age, male defaults)
+  const latestWeight = bodyMetrics.find((m: any) => m.metric_type === 'weight');
+  const weightKg = latestWeight ? Number(latestWeight.value) : 70;
+  // Convert lbs to kg if unit is lb/lbs
+  const weightKgNorm = latestWeight && /^lb/i.test(latestWeight.unit || '') ? weightKg * 0.453592 : weightKg;
+  const bmr = Math.round(10 * weightKgNorm + 6.25 * 170 - 5 * 30 + 5);
+
+  // Steps calories: ~0.04 kcal/step beyond what walking exercise already covers
+  const stepCount = Number(steps?.step_count) || 0;
+  // Only add step burn if there's no auto-logged walking exercise for today
+  const hasWalkingExercise = exercises.some((e: any) => (e.exercise_type || '').toLowerCase() === 'walking');
+  const stepsCals = hasWalkingExercise ? 0 : Math.round(stepCount * 0.04);
+
+  const totalBurned = bmr + exerciseCalsBurned + stepsCals;
 
   return {
     goal,
@@ -106,9 +122,41 @@ export async function getDailySummary(dateStr: string): Promise<any> {
     exercise_summary: {
       exercises,
       total_calories_burned: exerciseCalsBurned,
+      total_exercises: exercises.length,
+      total_duration_minutes: totalDurationMinutes,
     },
-    step_summary: steps || { step_count: 0 },
+    step_summary: { total_steps: stepCount, step_count: stepCount },
     body_metrics: bodyMetrics,
-    calories_burned: { total: exerciseCalsBurned },
+    calories_burned: {
+      bmr,
+      exercise: exerciseCalsBurned,
+      steps: stepsCals,
+      total: totalBurned,
+    },
   };
+}
+
+export async function getWeeklySummary(_dateStr?: string): Promise<any> {
+  const data = await getWeeklyData();
+  const totals = data.reduce((acc, d) => ({
+    calories: acc.calories + d.calories,
+    protein: acc.protein + d.protein,
+    steps: acc.steps + d.steps,
+  }), { calories: 0, protein: 0, steps: 0 });
+  return { days: data, averages: { calories: Math.round(totals.calories / 7), protein: Math.round(totals.protein * 10 / 7) / 10, steps: Math.round(totals.steps / 7) } };
+}
+
+export async function getMonthlySummary(_year?: number, _month?: number): Promise<any> {
+  const result: any[] = [];
+  for (let i = 29; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const dateStr = d.toISOString().split('T')[0];
+    const meals = db.findWhere('meals', (r: any) => r.user_id === 1 && r.date === dateStr) as any[];
+    const mealIds = new Set(meals.map((m: any) => m.id));
+    const foods = db.findWhere('foods', (f: any) => mealIds.has(f.meal_id)) as any[];
+    const steps = db.findFirst('step_entries', (r: any) => r.user_id === 1 && r.date === dateStr) as any;
+    result.push({ date: dateStr, calories: Math.round(foods.reduce((s, f) => s + (Number(f.calories) || 0), 0)), steps: Number(steps?.step_count) || 0 });
+  }
+  return { days: result };
 }

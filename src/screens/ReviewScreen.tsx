@@ -14,6 +14,7 @@ import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view
 import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import * as foodService from "../services/foodService";
+import { markDefaultHabitDone } from "../services/habitService";
 import { getFileUri } from "../services/fileService";
 import NutritionCard from "../components/NutritionCard";
 import { COLORS, MEAL_LABELS, getScoreColor, getSpikeColor } from "../utils/constants";
@@ -138,6 +139,7 @@ export default function ReviewScreen() {
   const totalCalories = foodsList.reduce((s, f) => s + f.calories, 0);
 
   const handleDone = () => {
+    markDefaultHabitDone('Log Food');
     navigation.navigate("Home");
   };
 
@@ -428,11 +430,11 @@ export default function ReviewScreen() {
             </View>
 
             {/* Food items detected */}
-            {analysis.food_items.length > 0 && (
+            {(Array.isArray(analysis.food_items) ? analysis.food_items : []).length > 0 && (
               <View style={styles.analysisCard}>
                 <Text style={styles.analysisCardTitle}>Detected Items</Text>
                 <View style={styles.chipRow}>
-                  {analysis.food_items.map((item, i) => (
+                  {(Array.isArray(analysis.food_items) ? analysis.food_items : []).map((item, i) => (
                     <View key={i} style={styles.chip}>
                       <Text style={styles.chipText}>{item}</Text>
                     </View>
@@ -442,12 +444,12 @@ export default function ReviewScreen() {
             )}
 
             {/* Healthy items */}
-            {analysis.healthy_items.length > 0 && (
+            {(Array.isArray(analysis.healthy_items) ? analysis.healthy_items : []).length > 0 && (
               <View style={styles.analysisCard}>
                 <Text style={[styles.analysisCardTitle, { color: "#00E676" }]}>
                   Healthy
                 </Text>
-                {analysis.healthy_items.map((entry, i) => (
+                {(Array.isArray(analysis.healthy_items) ? analysis.healthy_items : []).map((entry, i) => (
                   <View key={i} style={styles.analysisListItem}>
                     <Text style={styles.analysisItemName}>{entry.item}</Text>
                     <Text style={styles.analysisItemReason}>{entry.reason}</Text>
@@ -457,12 +459,12 @@ export default function ReviewScreen() {
             )}
 
             {/* Unhealthy items */}
-            {analysis.unhealthy_items.length > 0 && (
+            {(Array.isArray(analysis.unhealthy_items) ? analysis.unhealthy_items : []).length > 0 && (
               <View style={styles.analysisCard}>
                 <Text style={[styles.analysisCardTitle, { color: "#FF5252" }]}>
                   Watch Out
                 </Text>
-                {analysis.unhealthy_items.map((entry, i) => (
+                {(Array.isArray(analysis.unhealthy_items) ? analysis.unhealthy_items : []).map((entry, i) => (
                   <View key={i} style={styles.analysisListItem}>
                     <Text style={styles.analysisItemName}>{entry.item}</Text>
                     <Text style={styles.analysisItemReason}>{entry.reason}</Text>
@@ -472,10 +474,10 @@ export default function ReviewScreen() {
             )}
 
             {/* Recommendations */}
-            {analysis.recommendations.length > 0 && (
+            {(Array.isArray(analysis.recommendations) ? analysis.recommendations : []).length > 0 && (
               <View style={styles.analysisCard}>
                 <Text style={styles.analysisCardTitle}>Recommendations</Text>
-                {analysis.recommendations.map((rec, i) => (
+                {(Array.isArray(analysis.recommendations) ? analysis.recommendations : []).map((rec: any, i: number) => (
                   <View key={i} style={styles.recommendationItem}>
                     <Text style={styles.recommendationBullet}>•</Text>
                     <Text style={styles.recommendationText}>{rec}</Text>

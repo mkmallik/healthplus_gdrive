@@ -38,3 +38,8 @@ export async function logStepsFromWatchImage(imageUri: string): Promise<any> {
   const entry = await db.insert('step_entries', { user_id: 1, step_count: stepCount, source: 'watch_image', image_path: filename, date: d, created_at: nowISO() });
   return { entry, result };
 }
+
+export async function logSteps(stepCount: number, imageUri?: string, _audioUri?: string, _dateStr?: string): Promise<any> {
+  if (imageUri) return logStepsFromWatchImage(imageUri);
+  return logStepsManual(stepCount);
+}

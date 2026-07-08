@@ -11,7 +11,7 @@ import {
   Alert,
 } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import * as habitService from "../../services/habitService";
 import { COLORS } from "../../utils/constants";
@@ -81,6 +81,7 @@ export default function HabitsTab({ selectedDate, isToday, dateStr }: TabProps) 
 
   const fetchData = useCallback(async () => {
     try {
+      await habitService.ensureDefaultHabits();
       const [todayData, streakData] = await Promise.all([
         habitService.getHabitsToday(dateStr),
         habitService.getHabitStreaks(),
@@ -98,6 +99,8 @@ export default function HabitsTab({ selectedDate, isToday, dateStr }: TabProps) 
     setLoading(true);
     fetchData();
   }, [fetchData]);
+
+  useFocusEffect(useCallback(() => { fetchData(); }, [fetchData]));
 
   const markComplete = async (habitId: number) => {
     try {
@@ -120,22 +123,15 @@ export default function HabitsTab({ selectedDate, isToday, dateStr }: TabProps) 
   };
 
   const deleteHabit = (habitId: number, name: string) => {
-    Alert.alert("Delete Habit", `Remove "${name}"?`, [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Delete",
-        style: "destructive",
-        onPress: async () => {
-          try {
-            await habitService.deleteHabit(habitId);
-            showToast("Habit deleted.", "info");
-            fetchData();
-          } catch {
-            showToast("Failed to delete habit.", "error");
-          }
-        },
-      },
-    ]);
+    (async () => {
+      try {
+        await habitService.deleteHabit(habitId);
+        showToast("Habit deleted.", "info");
+        fetchData();
+      } catch {
+        showToast("Failed to delete habit.", "error");
+      }
+    })();
   };
 
   const handleCreate = async () => {

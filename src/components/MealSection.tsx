@@ -125,10 +125,7 @@ const MealSection: React.FC<MealSectionProps> = ({
         destructive: true,
         onPress: () => {
           closeModal();
-          Alert.alert("Delete", "Are you sure you want to delete this entry?", [
-            { text: "Cancel", style: "cancel" },
-            { text: "Delete", style: "destructive", onPress: () => onDeleteFood?.(item.id) },
-          ]);
+          onDeleteFood?.(item.id);
         },
       },
     ];

@@ -13,6 +13,7 @@ import { Audio } from "expo-av";
 import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import * as exerciseService from "../services/exerciseService";
+import { markDefaultHabitDone } from "../services/habitService";
 import { COLORS } from "../utils/constants";
 import { useToast } from "../components/Toast";
 
@@ -108,6 +109,7 @@ export default function ExerciseLogScreen() {
 
       const result = await exerciseService.logExercise(desc, audio);
 
+      markDefaultHabitDone('Exercise');
       navigation.navigate("ExerciseReview", { data: result });
     } catch (err: any) {
       const message = err?.name === 'API_KEY_NOT_CONFIGURED'

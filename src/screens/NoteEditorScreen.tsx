@@ -122,7 +122,6 @@ export default function NoteEditorScreen() {
         await noteService.createNote({
           title: title.trim(),
           content: content.trim(),
-          noteDate: noteDate || undefined,
           audioUri: audioUri || undefined,
           imageUri: imageUri || undefined,
         });
@@ -141,22 +140,15 @@ export default function NoteEditorScreen() {
 
   const handleDelete = () => {
     if (!noteId) return;
-    Alert.alert("Delete Note", "Are you sure you want to delete this note?", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Delete",
-        style: "destructive",
-        onPress: async () => {
-          try {
-            await noteService.deleteNote(noteId!);
-            showToast("Note deleted.", "success");
-            navigation.goBack();
-          } catch {
-            showToast("Failed to delete note.", "error");
-          }
-        },
-      },
-    ]);
+    (async () => {
+      try {
+        await noteService.deleteNote(noteId!);
+        showToast("Note deleted.", "success");
+        navigation.goBack();
+      } catch {
+        showToast("Failed to delete note.", "error");
+      }
+    })();
   };
 
   if (loading) {

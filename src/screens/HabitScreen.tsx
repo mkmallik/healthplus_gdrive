@@ -163,22 +163,15 @@ export default function HabitScreen() {
   };
 
   const deleteHabit = (habitId: number, name: string) => {
-    Alert.alert("Delete Habit", `Remove "${name}"?`, [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Delete",
-        style: "destructive",
-        onPress: async () => {
-          try {
-            await habitService.deleteHabit(habitId);
-            showToast("Habit deleted.", "info");
-            fetchData();
-          } catch {
-            showToast("Failed to delete habit.", "error");
-          }
-        },
-      },
-    ]);
+    (async () => {
+      try {
+        await habitService.deleteHabit(habitId);
+        showToast("Habit deleted.", "info");
+        fetchData();
+      } catch {
+        showToast("Failed to delete habit.", "error");
+      }
+    })();
   };
 
   const handleCreate = async () => {

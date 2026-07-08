@@ -53,8 +53,8 @@ export default function ReminderCreateScreen() {
     try {
       await reminderService.createReminder({
         text: text.trim(),
-        reminderTime: reminderTime,
-        reminderDate: dateStr,
+        reminder_time: reminderTime,
+        reminder_date: dateStr,
         recurrence,
       });
       showToast(`Reminder set for ${reminderTime}`, "success");

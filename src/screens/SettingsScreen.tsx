@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -7,18 +7,27 @@ import {
   Alert,
   ScrollView,
   Linking,
+  TextInput,
+  Modal,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { useAuth } from "../context/AuthContext";
 import { useDrive } from "../context/DriveContext";
-import { COLORS } from "../utils/constants";
+import { resetDB } from "../services/sheetsDB";
+import { COLORS, SPREADSHEET_ID_KEY } from "../utils/constants";
 import { clearLocalCache } from "../services/fileService";
+import { useToast } from "../components/Toast";
+import * as SecureStore from "../utils/secureStorage";
 
 export default function SettingsScreen() {
   const navigation = useNavigation<any>();
   const { logout } = useAuth();
-  const { userEmail, userName, getSheetUrl } = useDrive();
+  const { userEmail, userName, getSheetUrl, reloadData } = useDrive();
+  const { showToast } = useToast();
+  const [linkModalVisible, setLinkModalVisible] = useState(false);
+  const [spreadsheetInput, setSpreadsheetInput] = useState("");
+  const [linking, setLinking] = useState(false);
 
   const handleDisconnect = () => {
     Alert.alert(
@@ -37,21 +46,39 @@ export default function SettingsScreen() {
     else Alert.alert("No spreadsheet found");
   };
 
-  const handleClearCache = () => {
-    Alert.alert(
-      "Clear Media Cache",
-      "Removes locally cached copies of photos and audio. Files remain safely in Google Drive and will re-download when needed.",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Clear Cache",
-          onPress: async () => {
-            await clearLocalCache();
-            Alert.alert("Done", "Local media cache cleared.");
-          },
-        },
-      ]
-    );
+  const handleLinkSpreadsheet = async () => {
+    const input = spreadsheetInput.trim();
+    if (!input) { showToast("Paste the spreadsheet ID or URL.", "error"); return; }
+
+    // Extract ID from URL if full URL pasted
+    // e.g. https://docs.google.com/spreadsheets/d/SPREADSHEET_ID/edit
+    let id = input;
+    const match = input.match(/\/spreadsheets\/d\/([a-zA-Z0-9_-]+)/);
+    if (match) id = match[1];
+
+    if (!id || id.length < 10) {
+      showToast("That doesn't look like a valid spreadsheet ID.", "error");
+      return;
+    }
+
+    setLinking(true);
+    try {
+      await SecureStore.setItemAsync(SPREADSHEET_ID_KEY, id);
+      resetDB();
+      await reloadData();
+      setLinkModalVisible(false);
+      setSpreadsheetInput("");
+      showToast("Spreadsheet linked! Your data is now synced.", "success");
+    } catch (e: any) {
+      showToast(e?.message || "Failed to link spreadsheet.", "error");
+    } finally {
+      setLinking(false);
+    }
+  };
+
+  const handleClearCache = async () => {
+    await clearLocalCache();
+    showToast("Local media cache cleared.", "success");
   };
 
   const items = [
@@ -72,6 +99,12 @@ export default function SettingsScreen() {
       label: "Goals",
       description: "Set daily nutrition & fitness targets",
       onPress: () => navigation.navigate("Goal"),
+    },
+    {
+      icon: "sync-outline",
+      label: "Link Spreadsheet from Another Device",
+      description: "Paste the spreadsheet ID to sync your data",
+      onPress: () => setLinkModalVisible(true),
     },
     {
       icon: "cloud-upload-outline",
@@ -124,6 +157,38 @@ export default function SettingsScreen() {
       </View>
 
       <Text style={styles.footer}>Data stored in your Google Drive · AI runs on OpenAI via your API key</Text>
+
+      {/* Link spreadsheet modal */}
+      <Modal visible={linkModalVisible} transparent animationType="slide" onRequestClose={() => setLinkModalVisible(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>Link Spreadsheet</Text>
+            <Text style={styles.modalDesc}>
+              On your other device, go to{"\n"}
+              <Text style={styles.modalBold}>Settings → View Google Sheet</Text>
+              {"\n"}Copy the URL from the browser and paste it below.
+            </Text>
+            <TextInput
+              style={styles.modalInput}
+              placeholder="Paste spreadsheet URL or ID"
+              placeholderTextColor={COLORS.textMuted}
+              value={spreadsheetInput}
+              onChangeText={setSpreadsheetInput}
+              autoCapitalize="none"
+              autoCorrect={false}
+              multiline
+            />
+            <View style={styles.modalButtons}>
+              <TouchableOpacity style={styles.modalCancel} onPress={() => { setLinkModalVisible(false); setSpreadsheetInput(""); }}>
+                <Text style={styles.modalCancelText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.modalConfirm, linking && { opacity: 0.6 }]} onPress={handleLinkSpreadsheet} disabled={linking}>
+                <Text style={styles.modalConfirmText}>{linking ? "Linking..." : "Link"}</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 }
@@ -156,4 +221,18 @@ const styles = StyleSheet.create({
   itemLabel: { fontSize: 15, color: COLORS.text, fontWeight: "500" },
   itemDesc: { fontSize: 12, color: COLORS.textSecondary, marginTop: 2 },
   footer: { fontSize: 11, color: COLORS.textMuted, textAlign: "center", margin: 24, lineHeight: 18 },
+  modalOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.7)", justifyContent: "flex-end" },
+  modalCard: { backgroundColor: COLORS.surface, borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 24, paddingBottom: 40 },
+  modalTitle: { fontSize: 18, fontWeight: "700", color: COLORS.text, marginBottom: 12 },
+  modalDesc: { fontSize: 14, color: COLORS.textSecondary, lineHeight: 20, marginBottom: 16 },
+  modalBold: { color: COLORS.text, fontWeight: "600" },
+  modalInput: {
+    backgroundColor: COLORS.surfaceElevated, borderRadius: 10, padding: 12,
+    color: COLORS.text, fontSize: 13, minHeight: 60, marginBottom: 16,
+  },
+  modalButtons: { flexDirection: "row", gap: 12 },
+  modalCancel: { flex: 1, padding: 14, borderRadius: 10, backgroundColor: COLORS.surfaceElevated, alignItems: "center" },
+  modalCancelText: { color: COLORS.textSecondary, fontWeight: "600" },
+  modalConfirm: { flex: 1, padding: 14, borderRadius: 10, backgroundColor: COLORS.primary, alignItems: "center" },
+  modalConfirmText: { color: "#000", fontWeight: "700" },
 });

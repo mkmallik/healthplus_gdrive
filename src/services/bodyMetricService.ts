@@ -41,6 +41,15 @@ export async function getBodyMetricsHistory(metricType: string, days: number = 3
     .slice(-days);
 }
 
+export async function logBodyMetric(description: string, audioUri?: string): Promise<any[]> {
+  if (audioUri) {
+    const transcription = await aiService.transcribeAudio(audioUri).catch(() => '');
+    const combined = description && transcription ? `${description}. ${transcription}` : description || transcription || '';
+    return logBodyMetricText(combined);
+  }
+  return logBodyMetricText(description);
+}
+
 export async function getLatestMetrics(): Promise<Record<string, any>> {
   const all = db.findWhere('body_metrics', (r: any) => r.user_id === 1) as any[];
   const latest: Record<string, any> = {};

@@ -100,7 +100,7 @@ export default function MealInsightsScreen() {
       {/* Food items */}
       <View style={styles.card}>
         <Text style={styles.cardTitle}>Items in this meal</Text>
-        {data.food_names.map((name, i) => (
+        {(Array.isArray(data.food_names) ? data.food_names : []).map((name, i) => (
           <Text key={i} style={styles.foodName}>•  {name}</Text>
         ))}
       </View>
@@ -219,10 +219,10 @@ export default function MealInsightsScreen() {
       ) : null}
 
       {/* Food Synergies */}
-      {data.food_synergies && data.food_synergies.length > 0 ? (
+      {Array.isArray(data.food_synergies) && data.food_synergies.length > 0 ? (
         <View style={styles.card}>
           <Text style={[styles.cardTitle, { color: "#26C6DA" }]}>Food Synergies</Text>
-          {data.food_synergies.map((s, i) => (
+          {(Array.isArray(data.food_synergies) ? data.food_synergies : []).map((s, i) => (
             <View key={i} style={styles.bulletItem}>
               <Text style={styles.bullet}>•</Text>
               <Text style={styles.bulletText}>{s}</Text>
@@ -232,10 +232,10 @@ export default function MealInsightsScreen() {
       ) : null}
 
       {/* Recommendations */}
-      {data.recommendations && data.recommendations.length > 0 ? (
+      {Array.isArray(data.recommendations) && data.recommendations.length > 0 ? (
         <View style={styles.card}>
           <Text style={[styles.cardTitle, { color: COLORS.primary }]}>Recommendations</Text>
-          {data.recommendations.map((r, i) => (
+          {data.recommendations.map((r: any, i: number) => (
             <View key={i} style={styles.bulletItem}>
               <Text style={[styles.bullet, { color: COLORS.primary }]}>{i + 1}.</Text>
               <Text style={styles.bulletText}>{r}</Text>

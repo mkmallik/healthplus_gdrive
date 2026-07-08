@@ -250,8 +250,15 @@ export async function remove(sheetName: string, id: number): Promise<void> {
   const sheetId = _sheetIds[sheetName];
   if (sheetId === undefined) throw new Error(`Sheet ID not found for ${sheetName}`);
 
-  const sheetRow = idx + 1; // 0-based row index (0 = header, idx+1 = data row)
   const spreadsheetId = await getSpreadsheetId();
+
+  // Fetch the ID column directly from the sheet to find the exact row —
+  // the cache index can drift if another device inserted rows since last load.
+  const colData = await sheetsGet(`/${spreadsheetId}/values/${encodeURIComponent(sheetName + '!A:A')}`);
+  const idRows: string[][] = (colData.values || []).slice(1); // skip header
+  const sheetIdx = idRows.findIndex(r => Number(r[0]) === id);
+  if (sheetIdx === -1) return; // already gone
+  const sheetRow = sheetIdx + 1; // 0-based: header=0, first data=1
 
   await sheetsPost(`/${spreadsheetId}:batchUpdate`, {
     requests: [{

@@ -125,10 +125,10 @@ export default function UniversalVoiceLogScreen() {
         return;
       }
 
-      const data = await voiceLogService.processVoiceLog(uri, undefined, dateStr);
+      const data = await voiceLogService.processVoiceLog(uri);
 
-      setResult({ category: data.category, message: data.message });
-      showToast(data.message, "success");
+      setResult({ category: data.category, message: data.content });
+      showToast(data.content || 'Logged!', "success");
     } catch (err: any) {
       const msg = err?.name === 'API_KEY_NOT_CONFIGURED'
         ? err.message

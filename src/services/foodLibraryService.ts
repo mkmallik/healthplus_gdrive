@@ -52,3 +52,36 @@ export async function deleteFoodLibraryItem(id: number): Promise<void> {
 export async function getFoodLibraryItem(id: number): Promise<any | null> {
   return db.findById('food_library', id) ?? null;
 }
+
+export async function listCategories(): Promise<string[]> {
+  const items = db.findWhere('food_library', (r: any) => r.user_id === 1) as any[];
+  const cats = new Set(items.map((i: any) => i.category || 'other'));
+  return Array.from(cats).sort();
+}
+
+export async function listFoodLibrary(optsOrCategory?: { category?: string; query?: string } | string): Promise<any[]> {
+  const opts = typeof optsOrCategory === 'string' ? { category: optsOrCategory } : optsOrCategory;
+  let items = db.findWhere('food_library', (r: any) => r.user_id === 1) as any[];
+  if (opts?.category) items = items.filter((i: any) => i.category === opts.category);
+  if (opts?.query) {
+    const q = opts.query.toLowerCase();
+    items = items.filter((i: any) => (i.name || '').toLowerCase().includes(q));
+  }
+  return items.sort((a: any, b: any) => (a.name || '').localeCompare(b.name || ''));
+}
+
+export async function quickLog(itemId: number, gramsOrMealId: number, mealTypeOrGrams?: number | string): Promise<any> {
+  const grams = typeof mealTypeOrGrams === 'number' ? mealTypeOrGrams : gramsOrMealId;
+  const item = db.findById('food_library', itemId) as any;
+  if (!item) throw new Error('Food library item not found');
+  const factor = grams / 100;
+  return db.insert('foods', {
+    meal_id: null, description: `${item.name} (${grams}g)`,
+    calories: Math.round((Number(item.calories_per_100g) || 0) * factor),
+    protein: Math.round((Number(item.protein_per_100g) || 0) * factor * 10) / 10,
+    carbs: Math.round((Number(item.carbs_per_100g) || 0) * factor * 10) / 10,
+    fat: Math.round((Number(item.fat_per_100g) || 0) * factor * 10) / 10,
+    fiber: Math.round((Number(item.fiber_per_100g) || 0) * factor * 10) / 10,
+    sugar: 0, sodium: 0, serving_size: `${grams}g`, created_at: nowISO(),
+  });
+}

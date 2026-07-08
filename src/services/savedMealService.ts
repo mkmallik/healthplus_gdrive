@@ -1,5 +1,5 @@
 import * as db from './sheetsDB';
-import { nowISO } from './mealService';
+import { today, nowISO } from './mealService';
 
 export async function getSavedMeals(): Promise<any[]> {
   const meals = db.findWhere('saved_meals', (r: any) => r.user_id === 1) as any[];
@@ -28,4 +28,32 @@ export async function deleteSavedMeal(id: number): Promise<void> {
   const items = db.findWhere('saved_meal_items', (i: any) => i.saved_meal_id === id) as any[];
   for (const item of items) await db.remove('saved_meal_items', item.id);
   await db.remove('saved_meals', id);
+}
+
+export async function listSavedMeals(): Promise<any[]> {
+  return getSavedMeals();
+}
+
+export async function saveMealAsTemplate(mealId: number, name: string): Promise<any> {
+  return saveMealFromLog(mealId, name);
+}
+
+export async function relogSavedMeal(savedMealId: number, mealType: string, dateStr?: string): Promise<any> {
+  const d = dateStr || today();
+  const savedMeal = db.findById('saved_meals', savedMealId) as any;
+  if (!savedMeal) throw new Error('Saved meal not found');
+  const items = db.findWhere('saved_meal_items', (i: any) => i.saved_meal_id === savedMealId) as any[];
+  const meal = await db.insert('meals', {
+    user_id: 1, meal_type: mealType, date: d,
+    description: savedMeal.name, image_url: null, created_at: nowISO(),
+  });
+  for (const item of items) {
+    await db.insert('foods', {
+      meal_id: (meal as any).id, description: item.description,
+      calories: item.calories, protein: item.protein, carbs: item.carbs,
+      fat: item.fat, fiber: item.fiber || 0, sugar: item.sugar || 0, sodium: item.sodium || 0,
+      serving_size: null, created_at: nowISO(),
+    });
+  }
+  return meal;
 }

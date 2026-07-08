@@ -54,3 +54,7 @@ export async function searchNotes(query: string): Promise<any[]> {
     ((r.title || '').toLowerCase().includes(q) || (r.content || '').toLowerCase().includes(q))
   ) as any[]).sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''));
 }
+
+export async function getNote(id: number): Promise<any | null> {
+  return (db.findById('notes', id) as any) ?? null;
+}

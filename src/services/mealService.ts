@@ -17,9 +17,27 @@ function classifyMeal(): string {
   return 'snack';
 }
 
+function toArray(val: any): any[] {
+  if (Array.isArray(val)) return val;
+  if (!val) return [];
+  if (typeof val === 'string') return val.split(/[.\n]/).map((s: string) => s.trim()).filter(Boolean);
+  return [];
+}
+
+function normalizeAnalysis(raw: any): any {
+  if (!raw || typeof raw !== 'object') return raw;
+  return {
+    ...raw,
+    food_items: toArray(raw.food_items),
+    healthy_items: toArray(raw.healthy_items),
+    unhealthy_items: toArray(raw.unhealthy_items),
+    recommendations: toArray(raw.recommendations),
+  };
+}
+
 function foodRowToResponse(row: any): any {
   let analysis = null;
-  if (row.analysis) { try { analysis = JSON.parse(row.analysis); } catch {} }
+  if (row.analysis) { try { analysis = normalizeAnalysis(JSON.parse(row.analysis)); } catch {} }
   return {
     id: row.id, meal_id: row.meal_id, description: row.description,
     image_path: row.image_path, calories: Number(row.calories) || 0,
@@ -196,11 +214,13 @@ export async function updateFood(foodId: number, updates: any): Promise<any> {
     if (items && items.length > 0) {
       const totals: any = { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0, sugar: 0, sodium: 0 };
       for (const item of items) {
-        for (const k of Object.keys(totals)) totals[k] += parseFloat(item.nutrition[k]) || 0;
+        const nutrition = item.nutrition || {};
+        for (const k of Object.keys(totals)) totals[k] += parseFloat(nutrition[k]) || 0;
       }
       for (const k of Object.keys(totals)) totals[k] = Math.round(totals[k] * 10) / 10;
       Object.assign(updates, totals);
-      if (items[0].analysis) updates.analysis = JSON.stringify(items[0].analysis);
+      const firstAnalysis = items.find((i: any) => i.analysis)?.analysis;
+      if (firstAnalysis) updates.analysis = JSON.stringify(firstAnalysis);
     }
   }
   delete updates.recalculate;

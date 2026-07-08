@@ -31,12 +31,12 @@ export async function toggleTodo(id: number): Promise<any> {
   return db.update('todo_items', id, { is_done: isDone, done_date: isDone ? today() : null });
 }
 
-export async function deleteTodo(id: number): Promise<void> {
-  await db.remove('todo_items', id);
+export async function deleteTodo(habitIdOrItemId: number, itemId?: number): Promise<void> {
+  await db.remove('todo_items', itemId ?? habitIdOrItemId);
 }
 
-export async function archiveTodo(id: number): Promise<void> {
-  await db.update('todo_items', id, { is_archived: 1 });
+export async function archiveTodo(habitIdOrItemId: number, itemId?: number): Promise<void> {
+  await db.update('todo_items', itemId ?? habitIdOrItemId, { is_archived: 1 });
 }
 
 export async function createTodo(habitId: number, text: string, _dateStr?: string): Promise<any> {
@@ -47,4 +47,10 @@ export async function updateTodo(habitId: number, itemId: number, data: { is_don
   return db.update('todo_items', itemId, {
     ...(data.is_done !== undefined ? { is_done: data.is_done ? 1 : 0 } : {}),
   });
+}
+
+export async function getTodos(habitId: number, dateStr?: string): Promise<any> {
+  const items = await getTodosForHabit(habitId, dateStr);
+  const done = items.filter(i => Number(i.is_done) === 1).length;
+  return { total: items.length, done, pending: items.length - done, items };
 }

@@ -114,3 +114,10 @@ export async function getStreaks(): Promise<any> {
 
   return { overall: { current_streak: current, best_streak: best } };
 }
+
+export async function getTrends(_metricOrDays?: any, _period?: any): Promise<any> {
+  const days = typeof _metricOrDays === 'number' ? _metricOrDays : 30;
+  const nutrition = await getNutritionHistory(days);
+  const steps = await getStepsHistory(days);
+  return { nutrition, steps };
+}

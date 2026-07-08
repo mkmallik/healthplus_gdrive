@@ -98,10 +98,10 @@ export default function LogsTab({ selectedDate, isToday, dateStr }: TabProps) {
       if (period === "day") {
         const [habitsData, exerciseData] = await Promise.all([
           habitService.getHabitsToday(dateStr),
-          exerciseService.getExercisesByDate(dateStr).catch(() => ({ exercises: [] })),
+          exerciseService.getExercisesByDate(dateStr).catch(() => []),
         ]);
         setItems(habitsData);
-        setExercises(exerciseData?.exercises || []);
+        setExercises(Array.isArray(exerciseData) ? exerciseData : []);
         setMultiDayData([]);
         setHasMore(false);
       } else if (period === "all") {

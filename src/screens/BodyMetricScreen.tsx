@@ -14,6 +14,7 @@ import { Audio } from "expo-av";
 import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import * as bodyMetricService from "../services/bodyMetricService";
+import { markDefaultHabitDone } from "../services/habitService";
 import { COLORS } from "../utils/constants";
 import { useToast } from "../components/Toast";
 
@@ -105,6 +106,7 @@ export default function BodyMetricScreen() {
       const result = await bodyMetricService.logBodyMetric(desc, audio);
 
       setResults(result);
+      markDefaultHabitDone('Log Weight');
     } catch (err: any) {
       const message = err?.name === 'API_KEY_NOT_CONFIGURED'
         ? err.message

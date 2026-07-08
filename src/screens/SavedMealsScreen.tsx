@@ -39,6 +39,7 @@ export default function SavedMealsScreen() {
   const [meals, setMeals] = useState<SavedMeal[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<number | null>(null);
+  const [relogMeal, setRelogMeal] = useState<SavedMeal | null>(null);
 
   const fetchMeals = useCallback(async () => {
     try {
@@ -59,47 +60,29 @@ export default function SavedMealsScreen() {
   );
 
   const handleRelog = (meal: SavedMeal) => {
-    const mealTypes = Object.keys(MEAL_LABELS);
-    Alert.alert(
-      "Log as which meal?",
-      `${meal.name} (${Math.round(meal.total_calories)} kcal)`,
-      [
-        ...mealTypes.map((mt) => ({
-          text: MEAL_LABELS[mt],
-          onPress: async () => {
-            try {
-              await savedMealService.relogSavedMeal(meal.id, mt);
-              showToast(`${meal.name} logged as ${MEAL_LABELS[mt]}.`, "success");
-            } catch {
-              showToast("Failed to log meal.", "error");
-            }
-          },
-        })),
-        { text: "Cancel", style: "cancel" as const },
-      ]
-    );
+    setRelogMeal(meal);
   };
 
-  const handleDelete = (meal: SavedMeal) => {
-    Alert.alert(
-      "Delete Saved Meal",
-      `Delete "${meal.name}"? This cannot be undone.`,
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Delete",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              await savedMealService.deleteSavedMeal(meal.id);
-              setMeals((prev) => prev.filter((m) => m.id !== meal.id));
-            } catch {
-              showToast("Failed to delete meal.", "error");
-            }
-          },
-        },
-      ]
-    );
+  const confirmRelog = async (mt: string) => {
+    if (!relogMeal) return;
+    const meal = relogMeal;
+    setRelogMeal(null);
+    try {
+      await savedMealService.relogSavedMeal(meal.id, mt);
+      showToast(`${meal.name} logged as ${MEAL_LABELS[mt]}.`, "success");
+    } catch {
+      showToast("Failed to log meal.", "error");
+    }
+  };
+
+  const handleDelete = async (meal: SavedMeal) => {
+    try {
+      await savedMealService.deleteSavedMeal(meal.id);
+      setMeals((prev) => prev.filter((m) => m.id !== meal.id));
+      showToast("Meal deleted.", "success");
+    } catch {
+      showToast("Failed to delete meal.", "error");
+    }
   };
 
   const toggleExpand = (id: number) => {
@@ -195,6 +178,19 @@ export default function SavedMealsScreen() {
           ))
         )}
       </ScrollView>
+      {relogMeal && (
+        <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: COLORS.surface, borderTopWidth: 1, borderTopColor: COLORS.border, padding: 16 }}>
+          <Text style={{ color: COLORS.text, fontWeight: '700', marginBottom: 12 }}>Log "{relogMeal.name}" as:</Text>
+          {Object.keys(MEAL_LABELS).map(mt => (
+            <TouchableOpacity key={mt} onPress={() => confirmRelog(mt)} style={{ paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: COLORS.border }}>
+              <Text style={{ color: COLORS.primary, fontSize: 16 }}>{MEAL_LABELS[mt]}</Text>
+            </TouchableOpacity>
+          ))}
+          <TouchableOpacity onPress={() => setRelogMeal(null)} style={{ paddingVertical: 12 }}>
+            <Text style={{ color: COLORS.textSecondary, fontSize: 16 }}>Cancel</Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </SafeAreaView>
   );
 }

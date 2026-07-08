@@ -10,7 +10,7 @@ export async function getHabits(): Promise<any[]> {
 
 export async function createHabit(data: {
   name: string; icon?: string; color?: string;
-  habit_type?: string; frequency?: string;
+  habit_type?: string; habitType?: string; frequency?: string; frequencyTarget?: number;
 }): Promise<any> {
   return db.insert('habits', {
     user_id: 1,
@@ -18,16 +18,19 @@ export async function createHabit(data: {
     icon: data.icon || 'checkmark-circle',
     color: data.color || '#00D4AA',
     frequency: data.frequency || 'daily',
-    frequency_target: 1,
-    habit_type: data.habit_type || 'boolean',
+    frequency_target: data.frequencyTarget || 1,
+    habit_type: data.habit_type || data.habitType || 'boolean',
     is_default: 0,
     is_active: 1,
     created_at: nowISO(),
   });
 }
 
-export async function updateHabit(id: number, data: Partial<{ name: string; icon: string; color: string; habit_type: string }>): Promise<any> {
-  return db.update('habits', id, data);
+export async function updateHabit(id: number, data: Partial<{ name: string; icon: string; color: string; habit_type: string; frequency: string; frequencyTarget: number; frequency_target: number }>): Promise<any> {
+  const { frequencyTarget, frequency_target, ...rest } = data as any;
+  const ft = frequencyTarget ?? frequency_target;
+  const update = { ...rest, ...(ft !== undefined ? { frequency_target: ft } : {}) };
+  return db.update('habits', id, update);
 }
 
 export async function deleteHabit(id: number): Promise<void> {
@@ -105,15 +108,17 @@ export async function getHabitStreak(habitId: number): Promise<number> {
 }
 
 export async function ensureDefaultHabits(): Promise<void> {
-  const existing = db.findWhere('habits', (r: any) => r.user_id === 1);
-  if (existing.length > 0) return;
+  const existing = db.findWhere('habits', (r: any) => r.user_id === 1) as any[];
+  const existingNames = new Set(existing.map((h: any) => (h.name || '').toLowerCase()));
 
   const defaults = [
     { name: 'Log Food', icon: 'restaurant', color: '#FFB74D' },
     { name: 'Log Weight', icon: 'scale-outline', color: '#A1887F' },
     { name: 'Log Steps', icon: 'footsteps', color: '#26C6DA' },
     { name: 'Exercise', icon: 'fitness', color: '#FF4081' },
-  ];
+  ].filter(d => !existingNames.has(d.name.toLowerCase()));
+
+  if (defaults.length === 0) return;
 
   for (const h of defaults) {
     await db.insert('habits', {
@@ -124,7 +129,8 @@ export async function ensureDefaultHabits(): Promise<void> {
   }
 }
 
-export async function getHabitsToday(dateStr: string): Promise<any[]> {
+export async function getHabitsToday(dateStr?: string): Promise<any[]> {
+  if (!dateStr) { const d = new Date(); dateStr = d.toISOString().split('T')[0]; }
   const habits = db.findWhere('habits', (r: any) => r.user_id === 1 && Number(r.is_active) === 1)
     .sort((a: any, b: any) => a.id - b.id) as any[];
 
@@ -139,7 +145,7 @@ export async function getHabitsToday(dateStr: string): Promise<any[]> {
       todo_summary = { total: items.length, done, items };
     }
 
-    return { habit, log, is_done: !!log, todo_summary };
+    return { habit, log, is_done: !!log, completed_today: !!log, logs: log ? [log] : [], todo_summary };
   });
 }
 
@@ -151,7 +157,8 @@ export async function getHabitStreaks(): Promise<any[]> {
   }));
 }
 
-export async function unlogHabit(habitId: number, dateStr: string): Promise<void> {
+export async function unlogHabit(habitId: number, dateStr?: string): Promise<void> {
+  if (!dateStr) { const d = new Date(); dateStr = d.toISOString().split('T')[0]; }
   const log = db.findFirst('habit_logs', (r: any) => r.habit_id === habitId && r.date === dateStr) as any;
   if (log) await db.remove('habit_logs', log.id);
 }
@@ -178,4 +185,28 @@ export async function getHabitLogs(opts: { limit?: number; offset?: number; date
   return Object.entries(byDate)
     .sort(([a], [b]) => b.localeCompare(a))
     .map(([date, entries]) => ({ date, entries }));
+}
+
+export async function logHabitDescriptive(habitId: number, contentOrOpts: string | { content?: string; audioUri?: string; imageUri?: string; logDate?: string }, imageUri?: string): Promise<any> {
+  if (typeof contentOrOpts === 'string') return logHabit(habitId, contentOrOpts, imageUri);
+  const opts = contentOrOpts;
+  return logHabit(habitId, opts.content || opts.logDate || '', opts.imageUri);
+}
+
+export async function markDefaultHabitDone(habitName: string): Promise<void> {
+  try {
+    await ensureDefaultHabits();
+    const habit = db.findFirst('habits', (r: any) =>
+      r.user_id === 1 && Number(r.is_active) === 1 &&
+      (r.name || '').toLowerCase() === habitName.toLowerCase()
+    ) as any;
+    if (!habit) return;
+    const d = today();
+    const already = db.findFirst('habit_logs', (r: any) => r.habit_id === habit.id && r.date === d);
+    if (already) return; // already logged today
+    await db.insert('habit_logs', {
+      habit_id: habit.id, user_id: 1, date: d,
+      content: null, image_url: null, log_type: 'auto', created_at: nowISO(),
+    });
+  } catch {}
 }

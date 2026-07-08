@@ -80,9 +80,11 @@ export default function FoodDetailScreen() {
   const [food, setFood] = useState<FoodData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [tapCount, setTapCount] = useState(0);
   const [recalculating, setRecalculating] = useState(false);
   const [quantity, setQuantity] = useState("1");
   const [baseNutrition, setBaseNutrition] = useState({
@@ -98,6 +100,12 @@ export default function FoodDetailScreen() {
     sugar: "0",
     sodium: "0",
   });
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  useEffect(() => {
+    if (food?.image_path) {
+      getFileUri(food.image_path).then(setImageUrl);
+    }
+  }, [food?.image_path]);
 
   useEffect(() => {
     const fetchFood = async () => {
@@ -106,6 +114,12 @@ export default function FoodDetailScreen() {
         setFood(data);
         if (startEditing) {
           const f = data;
+          const base = {
+            calories: f.calories, protein: f.protein, carbs: f.carbs,
+            fat: f.fat, fiber: f.fiber, sugar: f.sugar, sodium: f.sodium,
+          };
+          setBaseNutrition(base);
+          setQuantity("1");
           setEditFields({
             description: f.description || "",
             calories: String(f.calories),
@@ -143,12 +157,6 @@ export default function FoodDetailScreen() {
     );
   }
 
-  const [imageUrl, setImageUrl] = React.useState<string | null>(null);
-  React.useEffect(() => {
-    if (food.image_path) {
-      getFileUri(food.image_path).then(setImageUrl);
-    }
-  }, [food.image_path]);
   const analysis = food.analysis;
 
   const handleEdit = () => {
@@ -250,28 +258,21 @@ export default function FoodDetailScreen() {
     }
   };
 
-  const handleDelete = () => {
-    Alert.alert(
-      "Delete Entry",
-      "Are you sure you want to delete this food entry?",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Delete",
-          style: "destructive",
-          onPress: async () => {
-            setDeleting(true);
-            try {
-              await foodService.deleteFood(food.id);
-              navigation.goBack();
-            } catch {
-              showToast("Failed to delete entry.", "error");
-              setDeleting(false);
-            }
-          },
-        },
-      ]
-    );
+  const handleDelete = async () => {
+    setTapCount(c => c + 1);
+    if (!food) { setDeleteError("Food not loaded (food is null)"); return; }
+    setDeleteError(null);
+    setDeleting(true);
+    try {
+      await foodService.deleteFood(food.id);
+      showToast("Food entry deleted.", "success");
+      navigation.goBack();
+    } catch (err: any) {
+      const msg = err?.message || String(err);
+      setDeleteError(msg);
+      showToast(`Delete failed: ${msg}`, "error");
+      setDeleting(false);
+    }
   };
 
   const updateField = (field: keyof EditFields, value: string) => {
@@ -366,11 +367,11 @@ export default function FoodDetailScreen() {
             </View>
 
             {/* Food items detected */}
-            {analysis.food_items.length > 0 && (
+            {(Array.isArray(analysis.food_items) ? analysis.food_items : []).length > 0 && (
               <View style={styles.analysisCard}>
                 <Text style={styles.analysisCardTitle}>Detected Items</Text>
                 <View style={styles.chipRow}>
-                  {analysis.food_items.map((item, i) => (
+                  {(Array.isArray(analysis.food_items) ? analysis.food_items : []).map((item, i) => (
                     <View key={i} style={styles.chip}>
                       <Text style={styles.chipText}>{item}</Text>
                     </View>
@@ -380,12 +381,12 @@ export default function FoodDetailScreen() {
             )}
 
             {/* Healthy items */}
-            {analysis.healthy_items.length > 0 && (
+            {(Array.isArray(analysis.healthy_items) ? analysis.healthy_items : []).length > 0 && (
               <View style={styles.analysisCard}>
                 <Text style={[styles.analysisCardTitle, { color: "#00E676" }]}>
                   Healthy
                 </Text>
-                {analysis.healthy_items.map((entry, i) => (
+                {(Array.isArray(analysis.healthy_items) ? analysis.healthy_items : []).map((entry, i) => (
                   <View key={i} style={styles.analysisListItem}>
                     <Text style={styles.analysisItemName}>{entry.item}</Text>
                     <Text style={styles.analysisItemReason}>{entry.reason}</Text>
@@ -395,12 +396,12 @@ export default function FoodDetailScreen() {
             )}
 
             {/* Unhealthy items */}
-            {analysis.unhealthy_items.length > 0 && (
+            {(Array.isArray(analysis.unhealthy_items) ? analysis.unhealthy_items : []).length > 0 && (
               <View style={styles.analysisCard}>
                 <Text style={[styles.analysisCardTitle, { color: "#FF5252" }]}>
                   Watch Out
                 </Text>
-                {analysis.unhealthy_items.map((entry, i) => (
+                {(Array.isArray(analysis.unhealthy_items) ? analysis.unhealthy_items : []).map((entry, i) => (
                   <View key={i} style={styles.analysisListItem}>
                     <Text style={styles.analysisItemName}>{entry.item}</Text>
                     <Text style={styles.analysisItemReason}>{entry.reason}</Text>
@@ -410,10 +411,10 @@ export default function FoodDetailScreen() {
             )}
 
             {/* Recommendations */}
-            {analysis.recommendations.length > 0 && (
+            {(Array.isArray(analysis.recommendations) ? analysis.recommendations : []).length > 0 && (
               <View style={styles.analysisCard}>
                 <Text style={styles.analysisCardTitle}>Recommendations</Text>
-                {analysis.recommendations.map((rec, i) => (
+                {(Array.isArray(analysis.recommendations) ? analysis.recommendations : []).map((rec: any, i: number) => (
                   <View key={i} style={styles.recommendationItem}>
                     <Text style={styles.recommendationBullet}>•</Text>
                     <Text style={styles.recommendationText}>{rec}</Text>
@@ -552,13 +553,17 @@ export default function FoodDetailScreen() {
             </View>
           </View>
         ) : (
+          <React.Fragment>
+          {deleteError ? (
+            <Text style={{ color: 'red', padding: 8, fontSize: 13 }}>{deleteError}</Text>
+          ) : null}
           <View style={styles.bottomRow}>
             <TouchableOpacity
               style={styles.dangerButton}
               onPress={handleDelete}
               activeOpacity={0.8}
             >
-              <Text style={styles.dangerButtonText}>Delete</Text>
+              <Text style={styles.dangerButtonText}>Delete {tapCount > 0 ? `(${tapCount})` : ''}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.primaryButton}
@@ -568,6 +573,7 @@ export default function FoodDetailScreen() {
               <Text style={styles.primaryButtonText}>Edit</Text>
             </TouchableOpacity>
           </View>
+          </React.Fragment>
         )}
       </View>
     </SafeAreaView>
@@ -827,7 +833,7 @@ const styles = StyleSheet.create({
   bottomBar: {
     paddingHorizontal: 16,
     paddingTop: 12,
-    paddingBottom: 16,
+    paddingBottom: 70,
     backgroundColor: COLORS.background,
     borderTopWidth: 1,
     borderTopColor: COLORS.border,

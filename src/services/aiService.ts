@@ -225,7 +225,17 @@ function normalizeItems(items: any[], fallbackName: string): any[] {
     for (const k of ['calories', 'protein', 'carbs', 'fat', 'fiber', 'sugar', 'sodium']) {
       nutrition[k] = parseFloat(nutritionRaw[k]) || 0;
     }
-    const analysis = item.analysis || null;
+    let analysis = item.analysis || null;
+    if (analysis && !Array.isArray(analysis.recommendations)) {
+      analysis = {
+        ...analysis,
+        recommendations: analysis.recommendations
+          ? (typeof analysis.recommendations === 'string'
+              ? analysis.recommendations.split(/[.\n]/).map((s: string) => s.trim()).filter(Boolean)
+              : [])
+          : [],
+      };
+    }
     result.push({ name, nutrition, analysis });
   }
   if (result.length === 0) {

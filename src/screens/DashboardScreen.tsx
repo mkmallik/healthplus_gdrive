@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
 } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import * as dashboardService from "../services/dashboardService";
 import { COLORS, MEAL_LABELS, MEAL_ORDER, getScoreColor } from "../utils/constants";
@@ -213,6 +213,12 @@ export default function DashboardScreen() {
   useEffect(() => {
     if (activeTab === "daily") fetchDaily(dailyDate);
   }, [activeTab, dailyDate, fetchDaily]);
+
+  useFocusEffect(useCallback(() => {
+    if (activeTab === "daily") fetchDaily(dailyDate);
+    else if (activeTab === "weekly") fetchWeekly(weeklyDate);
+    else if (activeTab === "monthly") fetchMonthly(monthlyDate);
+  }, [activeTab, dailyDate, weeklyDate, monthlyDate, fetchDaily, fetchWeekly, fetchMonthly]));
 
   useEffect(() => {
     if (activeTab === "weekly") fetchWeekly(weeklyDate);

@@ -25,6 +25,10 @@ export const COLORS = {
   accent: '#00D4AA',
   streak: '#FF9800',
   snack: '#FFB74D',
+  streakInactive: '#333333',
+  breakfast: '#FFB74D',
+  lunch: '#26C6DA',
+  dinner: '#FF6B6B',
 };
 
 export const MEAL_TYPES = ['breakfast', 'lunch', 'dinner', 'snack'] as const;

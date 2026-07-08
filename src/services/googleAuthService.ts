@@ -174,15 +174,18 @@ async function fetchUserInfo(accessToken: string): Promise<{ email: string; name
 
 // ── Token refresh ─────────────────────────────────────────────────────────────
 
-export async function refreshAccessToken(refreshToken: string, clientId: string): Promise<string> {
+export async function refreshAccessToken(refreshToken: string, clientId: string, clientSecret?: string): Promise<string> {
+  const params: Record<string, string> = {
+    client_id: clientId,
+    refresh_token: refreshToken,
+    grant_type: 'refresh_token',
+  };
+  if (clientSecret) params.client_secret = clientSecret;
+
   const response = await fetch('https://oauth2.googleapis.com/token', {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({
-      client_id: clientId,
-      refresh_token: refreshToken,
-      grant_type: 'refresh_token',
-    }).toString(),
+    body: new URLSearchParams(params).toString(),
   });
 
   if (!response.ok) {
@@ -210,7 +213,8 @@ export async function getValidAccessToken(): Promise<string> {
     if (!tokens.refreshToken) throw new Error('TOKEN_EXPIRED_NO_REFRESH');
     const clientId = await getClientId();
     if (!clientId) throw new Error('NO_CLIENT_ID');
-    return refreshAccessToken(tokens.refreshToken, clientId);
+    const clientSecret = await getClientSecret();
+    return refreshAccessToken(tokens.refreshToken, clientId, clientSecret ?? undefined);
   }
 
   return tokens.accessToken;

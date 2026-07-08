@@ -45,6 +45,14 @@ import { COLORS } from "./src/utils/constants";
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
+function BackButton({ navigation }: { navigation: any }) {
+  return (
+    <TouchableOpacity onPress={() => navigation.goBack()} style={{ paddingHorizontal: 8, paddingVertical: 4 }}>
+      <Ionicons name="arrow-back" size={24} color={COLORS.primary} />
+    </TouchableOpacity>
+  );
+}
+
 function headerRightButtons(navigation: any) {
   return () => (
     <View style={{ flexDirection: "row", alignItems: "center", gap: 12, marginRight: 16 }}>
@@ -164,14 +172,14 @@ function AppNavigator() {
     );
   }
 
-  const headerOptions = {
-    headerStyle: { backgroundColor: COLORS.surface },
-    headerTintColor: COLORS.primary,
-    headerTitleStyle: { color: COLORS.text },
-  };
-
   return (
-    <Stack.Navigator screenOptions={headerOptions}>
+    <Stack.Navigator screenOptions={({ navigation }) => ({
+      headerStyle: { backgroundColor: COLORS.surface },
+      headerTintColor: COLORS.primary,
+      headerTitleStyle: { color: COLORS.text },
+      headerBackVisible: false,
+      headerLeft: ({ canGoBack }) => canGoBack ? <BackButton navigation={navigation} /> : undefined,
+    })}>
       {status === 'ready' ? (
         <>
           <Stack.Screen name="Home" component={HomeTabs} options={{ headerShown: false }} />

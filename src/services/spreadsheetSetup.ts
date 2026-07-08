@@ -97,10 +97,26 @@ export async function createHealthPlusSpreadsheet(): Promise<string> {
   return spreadsheetId;
 }
 
+async function findAllHealthPlusSheets(): Promise<{ id: string; modifiedTime: string }[]> {
+  try {
+    const token = await getValidAccessToken();
+    const q = encodeURIComponent("name='HealthPlus Data' and mimeType='application/vnd.google-apps.spreadsheet' and trashed=false");
+    const res = await fetch(
+      `https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,modifiedTime)&orderBy=modifiedTime desc&pageSize=10`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    if (!res.ok) return [];
+    const data = await res.json();
+    return data.files || [];
+  } catch {
+    return [];
+  }
+}
+
 export async function getOrCreateSpreadsheet(): Promise<string> {
+  // Check locally stored ID first and verify it's valid
   const existing = await SecureStore.getItemAsync(SPREADSHEET_ID_KEY);
   if (existing) {
-    // Verify it still exists
     try {
       const token = await getValidAccessToken();
       const res = await fetch(
@@ -110,7 +126,24 @@ export async function getOrCreateSpreadsheet(): Promise<string> {
       if (res.ok) return existing;
     } catch {}
   }
+  // Nothing stored locally — search Drive for existing sheet
+  const sheets = await findAllHealthPlusSheets();
+  if (sheets.length > 0) {
+    const id = sheets[0].id; // most recently modified = most data
+    await SecureStore.setItemAsync(SPREADSHEET_ID_KEY, id);
+    return id;
+  }
   return createHealthPlusSpreadsheet();
+}
+
+export async function relinkSpreadsheet(): Promise<string | null> {
+  // Find the most recently modified HealthPlus sheet in Drive
+  const sheets = await findAllHealthPlusSheets();
+  if (sheets.length === 0) return null;
+  // Pick the most recently modified one (has the most data)
+  const best = sheets[0];
+  await SecureStore.setItemAsync(SPREADSHEET_ID_KEY, best.id);
+  return best.id;
 }
 
 export async function clearSpreadsheetId(): Promise<void> {

@@ -42,6 +42,10 @@ export async function logExerciseText(description: string, audioUri?: string): P
   return exRowToResponse(row);
 }
 
+export async function logExercise(description: string, audioUri?: string): Promise<any> {
+  return logExerciseText(description, audioUri);
+}
+
 export async function getExercisesByDate(dateStr?: string): Promise<any[]> {
   const d = dateStr || today();
   return db.findWhere('exercises', (r: any) => r.user_id === 1 && r.date === d)
@@ -53,4 +57,33 @@ export async function deleteExercise(id: number): Promise<void> {
   const ex = db.findById('exercises', id) as any;
   if (!ex || ex.user_id !== 1) throw new Error('Not found');
   await db.remove('exercises', id);
+}
+
+// Auto-log walking when steps >= 5000. Skips if a walking entry already exists today.
+// Also marks the Exercise and Log Steps habits done.
+export async function autoLogWalking(stepCount: number, dateStr?: string): Promise<void> {
+  if (stepCount < 5000) return;
+  const d = dateStr || today();
+  const existing = db.findFirst('exercises', (r: any) =>
+    r.user_id === 1 && r.date === d && (r.exercise_type || '').toLowerCase() === 'walking'
+  );
+  if (!existing) {
+    const durationMinutes = Math.round(stepCount / 100);
+    const caloriesBurned = Math.round(stepCount * 0.04);
+    await db.insert('exercises', {
+      user_id: 1,
+      exercise_type: 'walking',
+      description: `Walking — ${stepCount.toLocaleString()} steps`,
+      duration_minutes: durationMinutes,
+      calories_burned: caloriesBurned,
+      intensity: stepCount >= 8000 ? 'moderate' : 'light',
+      muscle_groups: JSON.stringify(['legs', 'core']),
+      analysis: JSON.stringify({ analysis: 'Auto-logged from step count', health_benefits: ['cardiovascular health', 'calorie burn'] }),
+      date: d,
+      created_at: nowISO(),
+    });
+  }
+  // Mark Exercise habit done (import lazily to avoid circular deps)
+  const { markDefaultHabitDone } = await import('./habitService');
+  markDefaultHabitDone('Exercise');
 }

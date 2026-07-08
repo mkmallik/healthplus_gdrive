@@ -13,6 +13,7 @@ import {
 } from '../services/googleAuthService';
 import { getOrCreateSpreadsheet, clearSpreadsheetId, getSpreadsheetUrl } from '../services/spreadsheetSetup';
 import { initDB, resetDB } from '../services/sheetsDB';
+import { ensureDefaultHabits } from '../services/habitService';
 import { SPREADSHEET_ID_KEY } from '../utils/constants';
 
 type DriveStatus = 'checking' | 'unauthenticated' | 'connecting' | 'loading' | 'ready' | 'error';
@@ -92,6 +93,7 @@ export function DriveProvider({ children }: { children: ReactNode }) {
       setSpreadsheetId(sid);
       resetDB();
       await initDB();
+      await ensureDefaultHabits();
       setStatus('ready');
     } catch (e: any) {
       const msg = e.message || '';
