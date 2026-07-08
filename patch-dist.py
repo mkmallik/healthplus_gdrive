@@ -9,8 +9,11 @@ ionicons_src = glob.glob(f'{dist}/**/Ionicons*.ttf', recursive=True)
 fonts_dir = os.path.join(dist, 'fonts')
 os.makedirs(fonts_dir, exist_ok=True)
 if ionicons_src:
+    # Copy to stable path used by Font.loadAsync
     shutil.copy(ionicons_src[0], os.path.join(fonts_dir, 'Ionicons.ttf'))
     print(f'Copied font to dist/fonts/Ionicons.ttf')
+    # Also ensure the hashed asset path exists (Vercel serves it fine, it's already there)
+    print(f'Ionicons source: {ionicons_src[0]}')
 
 extra = """
     <style>
@@ -29,14 +32,6 @@ extra = """
       }
     </style>"""
 
-# Write vercel.json — rewrites only apply when no matching file exists,
-# so assets/fonts are served directly and all other paths fall back to index.html (SPA)
-vercel_cfg = {
-    "rewrites": [{"source": "/(.*)", "destination": "/index.html"}]
-}
-with open(os.path.join(dist, 'vercel.json'), 'w') as f:
-    json.dump(vercel_cfg, f, indent=2)
-print('Wrote dist/vercel.json')
 
 index = os.path.join(dist, 'index.html')
 html = open(index).read()
