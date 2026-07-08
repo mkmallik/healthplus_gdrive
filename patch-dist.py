@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Run after `npx expo export --platform web` to patch dist/index.html."""
-import glob, os, shutil
+import glob, json, os, re, shutil
 
 dist = os.path.join(os.path.dirname(__file__), 'dist')
 
@@ -28,6 +28,20 @@ extra = """
         }
       }
     </style>"""
+
+# Write vercel.json — assets/fonts served directly, everything else → SPA index.html
+vercel_cfg = {
+    "routes": [
+        {"src": "/assets/(.*)", "dest": "/assets/$1",
+         "headers": {"Cache-Control": "public, max-age=31536000, immutable"}},
+        {"src": "/fonts/(.*)", "dest": "/fonts/$1"},
+        {"src": "/(.*\\.(js|css|ico|png|jpg|json|ttf|woff|woff2))", "dest": "/$1"},
+        {"src": "/(.*)", "dest": "/index.html"}
+    ]
+}
+with open(os.path.join(dist, 'vercel.json'), 'w') as f:
+    json.dump(vercel_cfg, f, indent=2)
+print('Wrote dist/vercel.json')
 
 index = os.path.join(dist, 'index.html')
 html = open(index).read()
