@@ -121,6 +121,8 @@ export async function getDailySummary(dateStr: string): Promise<any> {
 
   const totalBurned = bmr + exerciseCalsBurned + stepsCals;
 
+  console.log('[getDailySummary] calories_burned debug:', { bmr, exerciseCalsBurned, stepsCals, totalBurned, weightKg, weightKgNorm, latestWeight: latestWeight ? { type: latestWeight.metric_type, value: latestWeight.value, unit: latestWeight.unit } : null });
+
   return {
     goal,
     meals: mealData,

@@ -342,30 +342,30 @@ export default function DashboardScreen() {
               <Ionicons name="flame" size={18} color={COLORS.calories} />
               <Text style={styles.activityCardTitle}>Calories Burned</Text>
               <Text style={styles.burnedTotal}>
-                {Math.round(dailyData.calories_burned.total)} kcal
+                {Math.round(dailyData.calories_burned.total || 0)} kcal
               </Text>
             </View>
             <View style={styles.burnedRow}>
               <View style={styles.burnedItem}>
                 <Text style={styles.burnedLabel}>BMR</Text>
-                <Text style={styles.burnedValue}>{Math.round(dailyData.calories_burned.bmr)}</Text>
+                <Text style={styles.burnedValue}>{Math.round(dailyData.calories_burned.bmr || 0)}</Text>
               </View>
               {dailyData.calories_burned.exercise > 0 && (
                 <View style={styles.burnedItem}>
                   <Text style={styles.burnedLabel}>Exercise</Text>
-                  <Text style={styles.burnedValue}>{Math.round(dailyData.calories_burned.exercise)}</Text>
+                  <Text style={styles.burnedValue}>{Math.round(dailyData.calories_burned.exercise || 0)}</Text>
                 </View>
               )}
               {dailyData.calories_burned.steps > 0 && (
                 <View style={styles.burnedItem}>
                   <Text style={styles.burnedLabel}>Steps</Text>
-                  <Text style={styles.burnedValue}>{Math.round(dailyData.calories_burned.steps)}</Text>
+                  <Text style={styles.burnedValue}>{Math.round(dailyData.calories_burned.steps || 0)}</Text>
                 </View>
               )}
               <View style={styles.burnedItem}>
                 <Text style={styles.burnedLabel}>Net</Text>
                 <Text style={[styles.burnedValue, { color: COLORS.primary }]}>
-                  {Math.round(dailyData.total_calories - dailyData.calories_burned.total)}
+                  {Math.round(dailyData.total_calories - (dailyData.calories_burned.total || 0))}
                 </Text>
               </View>
             </View>
@@ -382,10 +382,10 @@ export default function DashboardScreen() {
                   <Text style={styles.activityCardTitle}>Exercise</Text>
                 </View>
                 <Text style={styles.activityCardValue}>
-                  {Math.round(dailyData.exercise_summary.total_calories_burned)} kcal burned
+                  {Math.round(dailyData.exercise_summary.total_calories_burned || 0)} kcal burned
                 </Text>
                 <Text style={styles.activityCardSub}>
-                  {dailyData.exercise_summary.total_exercises} session{dailyData.exercise_summary.total_exercises > 1 ? "s" : ""} · {Math.round(dailyData.exercise_summary.total_duration_minutes)} min
+                  {dailyData.exercise_summary.total_exercises} session{dailyData.exercise_summary.total_exercises > 1 ? "s" : ""} · {Math.round(dailyData.exercise_summary.total_duration_minutes || 0)} min
                 </Text>
               </View>
             )}
