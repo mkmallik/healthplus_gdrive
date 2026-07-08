@@ -29,15 +29,10 @@ extra = """
       }
     </style>"""
 
-# Write vercel.json — assets/fonts served directly, everything else → SPA index.html
+# Write vercel.json — rewrites only apply when no matching file exists,
+# so assets/fonts are served directly and all other paths fall back to index.html (SPA)
 vercel_cfg = {
-    "routes": [
-        {"src": "/assets/(.*)", "dest": "/assets/$1",
-         "headers": {"Cache-Control": "public, max-age=31536000, immutable"}},
-        {"src": "/fonts/(.*)", "dest": "/fonts/$1"},
-        {"src": "/(.*\\.(js|css|ico|png|jpg|json|ttf|woff|woff2))", "dest": "/$1"},
-        {"src": "/(.*)", "dest": "/index.html"}
-    ]
+    "rewrites": [{"source": "/(.*)", "destination": "/index.html"}]
 }
 with open(os.path.join(dist, 'vercel.json'), 'w') as f:
     json.dump(vercel_cfg, f, indent=2)
